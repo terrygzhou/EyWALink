@@ -1,0 +1,121 @@
+# ─── EyWALink AIOps Alert Rules ─────────────────────────────────────────
+# Prometheus alerting rules for AI agent fleet health.
+#
+# These complement the infra scrape config in packages/deploy/prometheus/.
+# The gateway /metrics endpoint should expose the family names below
+# (see packages/observability/src/metrics.ts and the gateway wiring).
+# ────────────────────────────────────────────────────────────────────────
+
+groups:
+  - name: eywalink-agent-health
+    rules:
+      # High error rate for any agent over the last 5 minutes.
+      - alert: AgentErrorRateHigh
+        expr: |
+          sum by (agent) (rate(agent_requests_total{status="error"}[5m]))
+            / clamp_min(sum by (agent) (rate(agent_requests_total[5m])), 0.001)
+          > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          aiops: agent-health
+        annotations:
+          summary: "Agent {{ $labels.agent }} error rate above 10%"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      # Degraded error-rate threshold (2%).
+      - alert: AgentErrorRateDegraded
+        expr: |
+          sum by (agent) (rate(agent_requests_total{status="error"}[5m]))
+            / clamp_min(sum by (agent) (rate(agent_requests_total[5m])), 0.001)
+          > 0.02
+        for: 5m
+        labels:
+          severity: warning
+          aiops: agent-health
+        annotations:
+          summary: "Agent {{ $labels.agent }} error rate above 2%"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      # p95 latency above 2s (degraded) / 10s (critical).
+      - alert: AgentLatencyHigh
+        expr: |
+          histogram_quantile(0.95, sum by (agent, le) (rate(agent_latency_seconds_bucket[5m])))
+          > 2
+        for: 2m
+        labels:
+          severity: warning
+          aiops: agent-health
+        annotations:
+          summary: "Agent {{ $labels.agent }} p95 latency above 2s"
+          description: "p95 latency is {{ $value }}s over the last 5 minutes."
+
+      - alert: AgentLatencyCritical
+        expr: |
+          histogram_quantile(0.95, sum by (agent, le) (rate(agent_latency_seconds_bucket[5m])))
+          > 10
+        for: 1m
+        labels:
+          severity: critical
+          aiops: agent-health
+        annotations:
+          summary: "Agent {{ $labels.agent }} p95 latency above 10s"
+          description: "p95 latency is {{ $value }}s over the last minute."
+
+      # Agent went silent: no requests for 10 minutes.
+      - alert: AgentSilent
+        expr: |
+          sum by (agent) (rate(agent_requests_total[10m])) == 0
+        for: 10m
+        labels:
+          severity: warning
+          aiops: agent-health
+        annotations:
+          summary: "Agent {{ $labels.agent }} is silent"
+          description: "No requests observed from agent {{ $labels.agent }} for 10 minutes."
+
+  - name: eywalink-cost
+    rules:
+      # Budget spend crossing thresholds, exposed by the cost tracker as a gauge.
+      - alert: AgentBudgetCritical
+        expr: agent_budget_pct_used >= 1.0
+        for: 5m
+        labels:
+          severity: critical
+          aiops: cost
+        annotations:
+          summary: "Budget {{ $labels.budget }} exceeded"
+          description: "Budget {{ $labels.budget }} ({{ $labels.scope }}) at {{ $value | humanizePercentage }} of limit."
+
+      - alert: AgentBudgetWarning
+        expr: agent_budget_pct_used >= 0.8
+        for: 5m
+        labels:
+          severity: warning
+          aiops: cost
+        annotations:
+          summary: "Budget {{ $labels.budget }} nearing limit"
+          description: "Budget {{ $labels.budget }} ({{ $labels.scope }}) at {{ $value | humanizePercentage }} of limit."
+
+  - name: eywalink-model-health
+    rules:
+      # Model degradation score from the degradation detector (0..1).
+      - alert: ModelDegraded
+        expr: model_degradation_score > 0.7
+        for: 5m
+        labels:
+          severity: warning
+          aiops: model-health
+        annotations:
+          summary: "Model {{ $labels.model }} degraded"
+          description: "Degradation score {{ $value }} for model {{ $labels.model }} (agent {{ $labels.agent }})."
+
+      - alert: ModelRetrainingTriggered
+        expr: model_retraining_triggered == 1
+        for: 1m
+        labels:
+          severity: critical
+          aiops: model-health
+        annotations:
+          summary: "Retraining triggered for {{ $labels.model }}"
+          description: "Model {{ $labels.model }} (agent {{ $labels.agent }}) crossed the retraining threshold."

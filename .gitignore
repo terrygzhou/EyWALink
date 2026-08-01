@@ -41,3 +41,5 @@ __pycache__/
 *.log
 .cache/
 .temp/
+packages/observability/examples/dashboard.html
+packages/observability/aiops-dashboard.html
