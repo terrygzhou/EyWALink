@@ -1,0 +1,62 @@
+name: Bug Report
+about: Create a report to help us improve
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+      placeholder: When I run command X, I get error Y...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: |
+        1. Go to '...'
+        2. Run '...'
+        3. See error
+      placeholder: Numbered steps...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: |
+        - OS:
+        - Node.js version:
+        - pnpm version:
+        - Package version:
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste relevant error logs here.
+      render: shell
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here.

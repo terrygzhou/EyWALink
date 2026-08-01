@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "composite": true
+  },
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/deploy" },
+    { "path": "packages/agents" },
+    { "path": "packages/observability" }
+  ]
+}

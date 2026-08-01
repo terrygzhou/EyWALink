@@ -1,0 +1,11 @@
+name: Dependabot
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
