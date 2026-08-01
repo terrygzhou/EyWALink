@@ -1,0 +1,27 @@
+# EyWALink pipeline configuration (zero lock-in: plain YAML)
+# Copy to pipeline-config.yaml and edit for your environment.
+
+pipeline:
+  name: software-build
+  max_steps: 50
+  sequential: true
+  llm:
+    base_url: http://localhost:8080    # SGLang / vLLM / any OpenAI-compatible server
+    model: Qwen3.6-27B-NVFP4
+    temperature: 0.2
+    max_tokens: 4096
+    timeout_read: 600                 # seconds; local LLMs are slow
+
+agents:
+  pm:
+    enabled: true
+  architect:
+    enabled: true
+  coder:
+    enabled: true
+    chunk_size: 1                     # files per code generation step
+  qa:
+    enabled: true
+
+persistence:
+  status_file: pipeline-status.json
