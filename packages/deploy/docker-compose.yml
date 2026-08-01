@@ -1,0 +1,250 @@
+# ─── EyWALink Private AI Reference Implementation ─────────────────
+# Production-ready Docker Compose stack:
+#   - Gateway (FastAPI) with multi-model fallback chain
+#   - SGLang (primary model serving, GPU)
+#   - vLLM MTP (secondary, speculative decoding)  [profile: fallback]
+#   - Ollama (CPU-friendly last-resort fallback)   [profile: fallback]
+#   - Qdrant (vector DB)
+#   - Observability: Prometheus, Grafana, Loki, Phoenix, OTel Collector
+#
+# Quickstart:
+#   cp .env.example .env
+#   docker compose up -d                 # core stack
+#   docker compose --profile fallback up -d   # + vLLM/Ollama fallbacks
+#
+# GPU management: SGLang pins --mem-fraction-static to leave headroom;
+# set NVIDIA_VISIBLE_DEVICES to dedicate specific GPUs per service.
+# ───────────────────────────────────────────────────────────────────
+
+services:
+  # ─── AI Gateway ────────────────────────────────────────────────
+  gateway:
+    build:
+      context: ../gateway
+      dockerfile: Dockerfile
+    container_name: eywalink-gateway
+    restart: unless-stopped
+    ports:
+      - "${GATEWAY_PORT:-8000}:8000"
+    environment:
+      - GATEWAY_FALLBACK_CHAIN=${FALLBACK_CHAIN:-sglang,vllm,ollama}
+      - GATEWAY_SGLANG_URL=http://sglang:8080
+      - GATEWAY_SGLANG_MODEL=${PRIMARY_MODEL:-nvidia/Qwen3.6-27B-NVFP4}
+      - GATEWAY_VLLM_URL=http://vllm:8000
+      - GATEWAY_VLLM_MODEL=${FALLBACK_VLLM_MODEL:-nvidia/Qwen3.6-27B-Text-NVFP4-MTP}
+      - GATEWAY_OLLAMA_URL=http://ollama:11434
+      - GATEWAY_OLLAMA_MODEL=${FALLBACK_OLLAMA_MODEL:-qwen3:8b}
+      - GATEWAY_QDRANT_URL=http://qdrant:6333
+      - GATEWAY_OTEL_ENDPOINT=http://otel-collector:4317
+      - GATEWAY_MAX_CONCURRENT=${MAX_CONCURRENT:-8}
+      - GATEWAY_LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      - sglang
+      - qdrant
+    deploy:
+      resources:
+        limits:
+          memory: ${GATEWAY_MEM_LIMIT:-512m}
+    networks:
+      - ai-stack
+      - observability
+
+  # ─── SGLang Model Server (Primary) ─────────────────────────────
+  sglang:
+    image: lmsysorg/sglang:latest
+    container_name: eywalink-sglang
+    restart: unless-stopped
+    gpus: all
+    ports:
+      - "${SGLANG_PORT:-8080}:8080"
+    shm_size: "32g"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=${SGLANG_GPU:-all}
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+      - sglang_jit:/root/.cache/tvm-ffi
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${SGLANG_GPU_COUNT:-all}
+              capabilities: [gpu]
+    command: >
+      sglang serve
+        --model-path ${PRIMARY_MODEL:-nvidia/Qwen3.6-27B-NVFP4}
+        --context-length ${CONTEXT_LENGTH:-128000}
+        --allow-auto-truncate
+        --mem-fraction-static ${MEM_FRACTION_STATIC:-0.89}
+        --chunked-prefill-size 4096
+        --attention-backend flashinfer
+        --reasoning-parser qwen3
+        --tool-call-parser qwen3_coder
+        --host 0.0.0.0
+        --port 8080
+        --enable-metrics
+    networks:
+      - ai-stack
+      - observability
+
+  # ─── vLLM MTP (Secondary / speculative decoding) ───────────────
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: eywalink-vllm
+    restart: unless-stopped
+    profiles: ["fallback"]
+    gpus: all
+    ports:
+      - "${VLLM_PORT:-8001}:8000"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=${VLLM_GPU:-all}
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${VLLM_GPU_COUNT:-all}
+              capabilities: [gpu]
+    command: >
+      --model ${FALLBACK_VLLM_MODEL:-nvidia/Qwen3.6-27B-Text-NVFP4-MTP}
+      --served-model-name ${FALLBACK_VLLM_MODEL:-nvidia/Qwen3.6-27B-Text-NVFP4-MTP}
+      --max-model-len ${CONTEXT_LENGTH:-128000}
+      --gpu-memory-utilization ${VLLM_GPU_MEM_UTIL:-0.90}
+      --enable-prefix-caching
+      --host 0.0.0.0
+      --port 8000
+    networks:
+      - ai-stack
+      - observability
+
+  # ─── Ollama (CPU-friendly last resort) ─────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: eywalink-ollama
+    restart: unless-stopped
+    profiles: ["fallback"]
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - ai-stack
+      - observability
+
+  # ─── Qdrant Vector Database ────────────────────────────────────
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: eywalink-qdrant
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+      - "${QDRANT_API_PORT:-6334}:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    networks:
+      - ai-stack
+      - observability
+
+  # ─── Prometheus ────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: eywalink-prometheus
+    restart: unless-stopped
+    ports:
+      - "${PROMETHEUS_PORT:-9091}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+    networks:
+      - observability
+
+  # ─── Grafana ───────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: eywalink-grafana
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana-dashboards/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_SERVER_ROOT_URL=http://localhost:${GRAFANA_PORT:-3001}
+    networks:
+      - observability
+
+  # ─── Phoenix (LLM Observability) ──────────────────────────────
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    container_name: eywalink-phoenix
+    restart: unless-stopped
+    ports:
+      - "${PHOENIX_PORT:-6007}:6006"
+    volumes:
+      - phoenix_data:/app/server/phoenix.db
+    networks:
+      - observability
+
+  # ─── Grafana Loki (Log Aggregation) ───────────────────────────
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: eywalink-loki
+    restart: unless-stopped
+    ports:
+      - "${LOKI_PORT:-3101}:3100"
+    volumes:
+      - loki_data:/loki
+    networks:
+      - observability
+
+  # ─── OTel Collector ───────────────────────────────────────────
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: eywalink-otel
+    restart: unless-stopped
+    ports:
+      - "4319:4317"
+      - "4320:4318"
+      - "8890:8889"
+    volumes:
+      - ./otel-collector/config.yml:/etc/otelcol/config.yml:ro
+    depends_on:
+      - phoenix
+      - loki
+    networks:
+      - observability
+
+# ─── Volumes ─────────────────────────────────────────────────────
+volumes:
+  hf_cache:
+    name: eywalink-hf-cache
+  sglang_jit:
+    name: eywalink-sglang-jit
+  qdrant_data:
+    name: eywalink-qdrant
+  prometheus_data:
+    name: eywalink-prometheus
+  grafana_data:
+    name: eywalink-grafana
+  phoenix_data:
+    name: eywalink-phoenix
+  loki_data:
+    name: eywalink-loki
+  ollama_data:
+    name: eywalink-ollama
+
+# ─── Networks ────────────────────────────────────────────────────
+networks:
+  ai-stack:
+    name: eywalink-ai
+  observability:
+    name: eywalink-obs

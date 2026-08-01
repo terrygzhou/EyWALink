@@ -1,0 +1,13 @@
+# ─── EyWALink Grafana dashboard provisioning ────────────────────────────
+apiVersion: 1
+
+providers:
+  - name: "eywalink"
+    orgId: 1
+    folder: "EyWALink"
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards

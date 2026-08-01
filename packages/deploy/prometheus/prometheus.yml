@@ -1,0 +1,37 @@
+# ─── EyWALink Prometheus configuration ──────────────────────────────────
+# Scrapes the gateway (FastAPI /metrics), SGLang (--enable-metrics), and
+# Qdrant. Grafana dashboards read from this Prometheus.
+# ────────────────────────────────────────────────────────────────────────
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: eywalink-gateway
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["gateway:8000"]
+        labels:
+          service: eywalink-gateway
+
+  - job_name: eywalink-sglang
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["sglang:8080"]
+        labels:
+          service: eywalink-sglang
+
+  - job_name: eywalink-qdrant
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["qdrant:6333"]
+        labels:
+          service: eywalink-qdrant
+
+  - job_name: eywalink-otel-collector
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["otel-collector:8889"]
+        labels:
+          service: eywalink-otel

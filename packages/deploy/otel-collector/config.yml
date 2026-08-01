@@ -1,0 +1,40 @@
+# ─── EyWALink OpenTelemetry Collector ───────────────────────────────────
+# Receives OTLP from the gateway, exports traces to Phoenix, and mirrors
+# metrics/logs for the observability stack. Single-node, ephemeral config.
+# ────────────────────────────────────────────────────────────────────────
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+
+exporters:
+  otlp/phoenix:
+    endpoint: phoenix:4317
+    tls:
+      insecure: true
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/phoenix, debug]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]

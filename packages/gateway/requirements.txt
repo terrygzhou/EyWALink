@@ -1,0 +1,21 @@
+# ─── EyWALink Private AI Gateway ────────────────────────────────────────
+# FastAPI application layer: OpenAI-compatible chat completions with an
+# automatic multi-model fallback chain (SGLang -> vLLM -> Ollama), Qdrant
+# vector search, Prometheus metrics, and OpenTelemetry tracing.
+#
+# Run locally:  uv pip install -r requirements.txt && uvicorn src.eywalink_gateway.main:app
+# Run in Docker: see packages/deploy/docker-compose.yml
+# ────────────────────────────────────────────────────────────────────────
+
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.32,<1.0
+httpx>=0.27,<1.0
+pydantic>=2.9,<3.0
+pydantic-settings>=2.6,<3.0
+prometheus-client>=0.21,<1.0
+opentelemetry-api>=1.28,<2.0
+opentelemetry-sdk>=1.28,<2.0
+opentelemetry-exporter-otlp-proto-grpc>=1.28,<2.0
+opentelemetry-instrumentation-fastapi>=0.49b0,<1.0
+opentelemetry-instrumentation-httpx>=0.49b0,<1.0
+qdrant-client>=1.12,<2.0
