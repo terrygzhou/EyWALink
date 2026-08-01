@@ -187,8 +187,23 @@ async def test_agent_coder_uses_chunk_size_from_config(tmp_path) -> None:
             "architecture": CANNED_OK["architect"],
         },
     }
+    # Canned coder payload returns BOTH planned files (list form), as a
+    # well-behaved model does for a multi-file chunk request.
+    canned = json.loads(json.dumps(CANNED_OK))
+    canned["coder"] = [
+        {
+            "path": "src/summarize.py",
+            "language": "python",
+            "content": "def main():\n    print('ok')\n",
+        },
+        {
+            "path": "src/summarizer.py",
+            "language": "python",
+            "content": "def summarize(text):\n    return text[:100]\n",
+        },
+    ]
     counter = _RequestCounter()
-    llm = LLMClient("http://llm:8080", "test-model", transport=counter.make(CANNED_OK))
+    llm = LLMClient("http://llm:8080", "test-model", transport=counter.make(canned))
     ctx = AgentContext(llm=llm, workdir=tmp_path)
     ctx.config["agents"] = {"coder": {"chunk_size": 2}}
 
@@ -196,7 +211,7 @@ async def test_agent_coder_uses_chunk_size_from_config(tmp_path) -> None:
     # chunk_size=2 -> both files requested in ONE sequential LLM call
     # (vs 2 calls with the default chunk_size=1 in the test above).
     assert counter.count == 1
-    assert len(partial["artifacts"]["code"]["files"]) == 1
+    assert len(partial["artifacts"]["code"]["files"]) == 2
 
 
 @pytest.mark.asyncio

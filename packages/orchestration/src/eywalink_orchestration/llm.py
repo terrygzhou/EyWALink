@@ -149,14 +149,21 @@ class LLMClient:
             messages, response_format={"type": "json_object"}, **overrides
         )
         try:
-            return json.loads(raw)
+            data = json.loads(raw)
         except json.JSONDecodeError:
             # Strip markdown fences if the server ignored JSON mode.
             start = raw.find("{")
             end = raw.rfind("}")
             if start != -1 and end > start:
-                return json.loads(raw[start : end + 1])
-            raise LLMError(f"LLM JSON response was not parseable: {raw[:500]}") from None
+                data = json.loads(raw[start : end + 1])
+            else:
+                raise LLMError(f"LLM JSON response was not parseable: {raw[:500]}") from None
+        if isinstance(data, dict) and "error" in data:
+            # Agent contract: an LLM response shaped {"error": ...} means the
+            # model rejected the task; surface it as an LLMError so the node
+            # runner marks the run failed instead of continuing on garbage.
+            raise LLMError(f"LLM returned error: {data['error']}")
+        return data
 
 
 class LLMError(RuntimeError):

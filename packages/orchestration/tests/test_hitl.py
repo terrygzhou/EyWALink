@@ -3,6 +3,10 @@
 Uses the same mocked-LLM technique as test_agents.py (httpx.MockTransport
 dispatching canned JSON per agent role), then drives the pause/resume cycle
 through LangGraph's checkpointer + ``Command(resume=...)``.
+
+Contract (docs/architecture.md §5): the review gate sits BETWEEN QA and done.
+The run pauses after QA with ``status=running``; approval marks the run
+``done``; requesting changes loops back to the Coder for another pass.
 """
 
 from __future__ import annotations
@@ -88,24 +92,30 @@ def _thread(thread_id: str = "t1") -> dict:
 
 
 @pytest.mark.asyncio
-async def test_pipeline_pauses_for_human_review(tmp_path) -> None:
+async def test_pipeline_pauses_between_qa_and_done(tmp_path) -> None:
     ctx = _ctx(CANNED_OK, workdir=tmp_path)
     graph = build_reviewed_pipeline_graph(ctx)
 
     result = await graph.ainvoke(make_initial_state(GOAL), config=_thread())
 
-    # Execution suspends at the review gate: interrupt payload surfaced.
+    # Execution suspends at the review gate AFTER QA: interrupt payload surfaced.
     assert "__interrupt__" in result
     payload = result["__interrupt__"][0].value
     assert payload["type"] == "human_review"
-    assert payload["review_after"] == "agent_coder"
+    assert payload["review_after"] == "agent_qa"
     assert len(payload["summary"]["code_files"]) == 2
+    assert payload["summary"]["qa_report"]["passed"] is True
+    # Paused state is running, NOT done — only human approval completes the run.
+    assert result["status"] == "running"
+    assert result["phase"] == "qa"
+    # QA already ran: all four nodes completed.
+    assert result["steps_completed"] == 4
     # The Coder already wrote files before the pause.
     assert (tmp_path / "src/summarize.py").exists()
 
 
 @pytest.mark.asyncio
-async def test_approve_resumes_to_qa(tmp_path) -> None:
+async def test_approve_marks_run_done(tmp_path) -> None:
     ctx = _ctx(CANNED_OK, workdir=tmp_path)
     graph = build_reviewed_pipeline_graph(ctx)
     await graph.ainvoke(make_initial_state(GOAL), config=_thread())
@@ -114,7 +124,7 @@ async def test_approve_resumes_to_qa(tmp_path) -> None:
 
     assert "__interrupt__" not in final
     assert final["status"] == "done"
-    assert final["phase"] == "qa"
+    assert final["phase"] == "done"
     assert final["artifacts"]["qa_report"]["passed"] is True
     assert final["reviews_used"] == 1
 
@@ -125,7 +135,7 @@ async def test_request_changes_loops_back_to_coder(tmp_path) -> None:
     graph = build_reviewed_pipeline_graph(ctx)
     await graph.ainvoke(make_initial_state(GOAL), config=_thread())
 
-    # Human asks for changes -> coder runs again -> review pauses again.
+    # Human asks for changes -> coder runs again -> qa runs again -> pauses.
     result = await graph.ainvoke(
         review_resume_changes("Add type hints to all functions."), config=_thread()
     )
@@ -134,13 +144,29 @@ async def test_request_changes_loops_back_to_coder(tmp_path) -> None:
     payload = result["__interrupt__"][0].value
     assert payload["type"] == "human_review"
     assert result["reviews_used"] == 1  # one review round consumed
-    # Coder re-ran after feedback: pm+arch+coder (1st pass) + coder (2nd pass).
-    assert result["steps_completed"] == 4
+    # First pass (pm+arch+coder+qa) + second pass (coder+qa) = 6 steps.
+    assert result["steps_completed"] == 6
+    assert result["phase"] == "qa"
 
     # Approve on the second round -> pipeline completes.
     final = await graph.ainvoke(review_resume_approve(), config=_thread())
     assert final["status"] == "done"
     assert final["reviews_used"] == 2
+
+
+@pytest.mark.asyncio
+async def test_qa_blocked_stops_before_review_gate(tmp_path) -> None:
+    """If QA validation fails, the run stops blocked — no review gate."""
+    canned = dict(CANNED_OK)
+    canned["coder"] = {"path": "src/bad.py", "language": "python", "content": "def x(:\n"}
+    ctx = _ctx(canned, workdir=tmp_path)
+    graph = build_reviewed_pipeline_graph(ctx)
+
+    result = await graph.ainvoke(make_initial_state(GOAL), config=_thread())
+
+    assert "__interrupt__" not in result
+    assert result["status"] == "blocked"
+    assert result["artifacts"]["qa_report"]["passed"] is False
 
 
 @pytest.mark.asyncio

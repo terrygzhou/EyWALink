@@ -79,12 +79,18 @@ quality and VRAM budget).
 
 ## 5. Human-in-the-Loop
 
-First end-to-end workflow includes a review gate between `qa` and `done`:
-- LangGraph interrupt at the review node (`interrupt_before=["review"]`).
-- Reviewer (human) approves/requests changes; on change, re-enters at the
-  phase that produced the rejected artifact.
-- Implementation: `checkpointer` backed by `persistence.py` (JSON on disk for
-  v1; pluggable for Postgres later).
+First end-to-end workflow includes a review gate **between `qa` and `done`**
+(shipped in EYW-13):
+- LangGraph interrupt at the review node (after `agent_qa`, before done).
+- The run pauses with `status=running`; QA's validation outcome lives in
+  `artifacts.qa_report.passed` (a failed validation stops the run as
+  `blocked` before the gate).
+- Reviewer (human) approves → `status=done`; requests changes → re-enters
+  at the Coder with feedback, then QA, then the gate again.
+- Implementation: `checkpointer` — `InMemorySaver` by default; the API
+  facade (`api.py`) uses a durable SQLite-backed saver
+  (`langgraph-checkpoint-sqlite`) tied to the status file, so resume works
+  across processes. Pluggable for Postgres later.
 
 ## 6. MCP Tool Integration Layer
 
@@ -110,19 +116,23 @@ First end-to-end workflow includes a review gate between `qa` and `done`:
 
 ## 8. Delivery Plan
 
-1. **EYW-7 (in progress, engineer):** state schema, LLM client, YAML config,
-   persistence, round-trip test — core package skeleton. ✅ mostly shipped.
-2. **EYW-8 (assigned, engineer):** four agent nodes, sequential graph,
-   first end-to-end pipeline run.
-3. **EYW-3 close-out:** MCP tool layer, human-in-the-loop interrupt, API
-   contract tests, this document updated to reflect shipped reality.
+1. **EYW-7 (done):** state schema, LLM client, YAML config, persistence,
+   round-trip test — core package skeleton. ✅ shipped.
+2. **EYW-8 (done):** four agent nodes, sequential graph,
+   first end-to-end pipeline run. ✅ shipped.
+3. **EYW-3 close-out (done, EYW-13):** MCP tool layer (v1 local stdio
+   servers), human-in-the-loop interrupt between QA and done, API contract
+   tests (`test_api.py`), end-to-end demo (`examples/run_pipeline.py`),
+   failing orchestration tests fixed. ✅ shipped.
 4. **Deploy integration:** orchestration runs inside `packages/deploy` compose
    stack alongside gateway/SGLang/Qdrant; VRAM budget doc covers concurrency.
+   Next up after close-out.
 
 ## 9. Open Questions
 
-- Checkpointer backend: JSON-on-disk is fine for v1; Postgres checkpointing
+- Checkpointer backend: SQLite-on-disk is fine for v1; Postgres checkpointing
   should follow the gateway's DB choice.
 - Resume semantics after failure: manual restart vs. retry-with-backoff.
 - Where the orchestration worker process runs (long-lived supervisor vs.
-  one-shot CLI) — decide before MCP layer lands.
+  one-shot CLI) — decided for the demo (one-shot CLI); revisit for the HTTP
+  API integration.

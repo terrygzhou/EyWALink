@@ -20,6 +20,13 @@ persistence, and open-source frameworks only.
 - `graph.py` — `build_pipeline_graph()`: sequential `PM -> Architect ->
   Coder -> QA` wiring with failure routing (no parallel requests — VRAM
   contention on local model servers).
+- `hitl.py` — `build_reviewed_pipeline_graph()`: human review gate
+  **between QA and done** (LangGraph interrupt + checkpointer-backed
+  resume; approve → done, request_changes → back to Coder).
+- `api.py` — stable contract surface: `run_pipeline`, `get_status`,
+  `resume`, `get_artifacts` (plain JSON in/out, durable SQLite checkpoints).
+- `mcp.py` — MCP tool integration layer: `ToolRegistry`, `MCPServerClient`
+  (local stdio servers), `run_tool_loop`.
 
 ## Install
 
@@ -64,9 +71,21 @@ graph = build_reviewed_pipeline_graph(ctx)
 thread = {"configurable": {"thread_id": "run-1"}}
 
 result = await graph.ainvoke(make_initial_state("Build a CLI"), config=thread)
-# result["__interrupt__"] — pipeline paused for human review after the Coder
+# result["__interrupt__"] — pipeline paused for human review after QA
 
 final = await graph.ainvoke(review_resume_approve(), config=thread)
+```
+
+For durable cross-process resume use the API facade:
+
+```python
+from eywalink_orchestration import get_artifacts, get_status, resume, run_pipeline
+
+run_id_state = await run_pipeline("Build a CLI", "pipeline-config.yaml", thread_id="run-1")
+# paused at the review gate
+status = get_status()                       # {"status": "running", ...}
+final = await resume("approve", config="pipeline-config.yaml", thread_id="run-1")
+artifacts = get_artifacts()
 ```
 
 ## MCP tools

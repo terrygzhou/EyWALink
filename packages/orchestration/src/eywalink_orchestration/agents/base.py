@@ -55,8 +55,13 @@ class AgentContext:
         workdir: str | Path | None = None,
         *,
         api_key: str = "not-needed",
+        transport: Any | None = None,
     ) -> "AgentContext":
-        """Build a context from a loaded pipeline config dict."""
+        """Build a context from a loaded pipeline config dict.
+
+        ``transport`` is an optional httpx transport override (used by tests
+        to inject a mock); ``None`` means the real HTTP transport.
+        """
         llm_cfg = config["pipeline"]["llm"]
         llm = LLMClient(
             base_url=llm_cfg["base_url"],
@@ -64,6 +69,7 @@ class AgentContext:
             api_key=api_key,
             temperature=llm_cfg.get("temperature", DEFAULT_CONFIG["pipeline"]["llm"]["temperature"]),
             max_tokens=llm_cfg.get("max_tokens", DEFAULT_CONFIG["pipeline"]["llm"]["max_tokens"]),
+            transport=transport,
         )
         return cls(
             llm=llm,

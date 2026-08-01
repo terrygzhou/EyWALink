@@ -1,26 +1,32 @@
 """Human-in-the-loop review workflow.
 
 Extends the sequential agent pipeline (:mod:`eywalink_orchestration.graph`)
-with a **human review gate**: after a configurable node (default: after the
-Coder produces code), the graph pauses and hands control to a human with a
-summary of what was produced. The human can:
+with a **human review gate between QA and done** (per docs/architecture.md
+§5): after the QA agent validates the generated code, the graph pauses and
+hands control to a human with a summary of what was produced. The human can:
 
-- ``approve`` — continue the pipeline (default onward flow).
+- ``approve`` — mark the run ``done`` (default onward flow).
 - ``request_changes`` — send feedback back to the Coder for another pass
   (bounded by ``max_reviews`` to prevent infinite loops).
 
 Mechanics (LangGraph interrupt/resume):
 
 - The review node calls :func:`langgraph.types.interrupt` with a payload of
-  the produced artifacts. Execution suspends; the caller (a CLI, the
-  gateway API, or a human operator) reads the payload from the checkpoint.
+  the produced artifacts + QA report. Execution suspends; the caller (a CLI,
+  the gateway API, or a human operator) reads the payload from the checkpoint.
 - The caller resumes with ``Command(resume={"decision": ..., "feedback":
   ...})``. ``interrupt`` returns that value and the node decides routing.
 
+Status semantics: while the run is paused at the gate the durable status is
+``running`` — only approval flips it to ``done``. QA's validation outcome
+lives in ``artifacts.qa_report.passed``; a failed validation routes to ``END``
+with ``status=blocked`` before the gate is ever reached.
+
 Persistence: the graph must be compiled with a checkpointer (an
-``InMemorySaver`` is the default here) so the paused state survives across
-processes — this is the zero-lock-in equivalent of a proprietary approval
-queue: the checkpoint is a plain, resumable state.
+``InMemorySaver`` is the default here; the API facade uses a SQLite-backed
+saver) so the paused state survives across processes — this is the
+zero-lock-in equivalent of a proprietary approval queue: the checkpoint is a
+plain, resumable state.
 """
 
 from __future__ import annotations
@@ -34,8 +40,8 @@ from langgraph.types import Command, interrupt
 from .agents import AgentContext, agent_architect, agent_coder, agent_pm, agent_qa, make_node
 from .state import PipelineState
 
-#: Position after which the human review gate is inserted.
-DEFAULT_REVIEW_AFTER = "agent_coder"
+#: Position after which the human review gate is inserted: between QA and done.
+DEFAULT_REVIEW_AFTER = "agent_qa"
 
 NODES: tuple[str, ...] = ("agent_pm", "agent_architect", "agent_coder", "agent_qa")
 
@@ -44,34 +50,53 @@ DECISION_APPROVE = "approve"
 DECISION_CHANGES = "request_changes"
 
 
-def _review_payload(state: PipelineState) -> dict[str, Any]:
+def _review_payload(state: PipelineState, review_after: str) -> dict[str, Any]:
     """Summarise the artifacts the human is being asked to review."""
     artifacts = state.get("artifacts") or {}
-    return {
+    qa_report = artifacts.get("qa_report") or {}
+    payload: dict[str, Any] = {
         "type": "human_review",
         "phase": state.get("phase", "unknown"),
-        "review_after": DEFAULT_REVIEW_AFTER,
+        "review_after": review_after,
         "summary": {
             "spec": artifacts.get("spec"),
             "architecture": artifacts.get("architecture"),
             "code_files": [
                 f.get("path") for f in (artifacts.get("code") or {}).get("files") or []
             ],
+            "qa_report": {
+                "passed": qa_report.get("passed"),
+                "files_validated": qa_report.get("files_validated"),
+            },
         },
     }
+    return payload
 
 
-async def _review_node(state: PipelineState, ctx: AgentContext) -> dict[str, Any]:
+def _review_node(
+    state: PipelineState, ctx: AgentContext, review_after: str
+) -> dict[str, Any]:
     """Pause for human approval; resume with a decision."""
     # interrupt() suspends the graph and returns the resumed value.
-    decision: dict[str, Any] = interrupt(_review_payload(state))
+    decision: dict[str, Any] = interrupt(_review_payload(state, review_after))
 
     reviews_used = state.get("reviews_used", 0)
     if decision.get("decision") == DECISION_APPROVE:
+        # The gate sits between QA and done: approval IS the terminal step.
+        if _next(review_after) == END:
+            return {
+                "phase": "done",
+                "status": "done",
+                "review_feedback": None,
+                "messages": [
+                    {"role": "system", "content": "Human approved the produced work."}
+                ],
+                "reviews_used": 1,  # reducer: operator.add
+            }
+        # Non-terminal gate (custom review_after): stay running, continue chain.
         return {
             "phase": "review",
             "status": "running",
-            "review_feedback": None,  # clear any outstanding change request
             "messages": [
                 {"role": "system", "content": "Human approved the produced work."}
             ],
@@ -97,7 +122,7 @@ async def _review_node(state: PipelineState, ctx: AgentContext) -> dict[str, Any
 
 
 def _route_after_review(state: PipelineState) -> str:
-    """Continue to QA on approval; loop back to Coder on requested changes."""
+    """Continue to done on approval; loop back to Coder on requested changes."""
     if state.get("review_feedback"):
         return "redo"
     return "continue"
@@ -117,7 +142,7 @@ def _next(node: str) -> str:
 async def _coder_with_feedback(state: PipelineState, ctx: AgentContext) -> dict[str, Any]:
     """Wrap ``agent_coder`` so human feedback reaches the next generation.
 
-    The base coder reads ``state["goal"]``; when a review requested changes,
+    The base coder reads ``state[\"goal\"]``; when a review requested changes,
     we append the feedback so the next pass addresses it, then delegate.
     """
     feedback = state.get("review_feedback")
@@ -130,21 +155,35 @@ async def _coder_with_feedback(state: PipelineState, ctx: AgentContext) -> dict[
     return await agent_coder(state, ctx)
 
 
+async def _qa_for_review(state: PipelineState, ctx: AgentContext) -> dict[str, Any]:
+    """Wrap ``agent_qa`` so a validated run is NOT marked done yet.
+
+    In a reviewed pipeline the run is only ``done`` after human approval, so
+    QA reports ``running`` (validation outcome stays in ``qa_report.passed``).
+    A failed validation still reports ``blocked`` so the graph stops.
+    """
+    partial = await agent_qa(state, ctx)
+    partial = dict(partial)
+    report = (partial.get("artifacts") or {}).get("qa_report") or {}
+    partial["status"] = "blocked" if report.get("passed") is False else "running"
+    return partial
+
+
 def build_reviewed_pipeline_graph(
     ctx: AgentContext,
     *,
     review_after: str = DEFAULT_REVIEW_AFTER,
     checkpointer: Any | None = None,
 ) -> Any:
-    """Build the sequential pipeline with a human review gate.
+    """Build the sequential pipeline with a human review gate after QA.
 
     Args:
         ctx: Runtime context (LLM client, config, workdir).
         review_after: Node after which the review gate is inserted. Must be
             one of the pipeline nodes.
         checkpointer: LangGraph checkpointer for interrupt persistence.
-            Defaults to ``InMemorySaver`` (process-local; swap for a
-            durable checkpoint backend in production).
+            Defaults to ``InMemorySaver`` (process-local; the API facade
+            passes a durable SQLite-backed saver).
 
     Returns:
         A compiled ``CompiledStateGraph``. Invoke with a thread config
@@ -158,8 +197,13 @@ def build_reviewed_pipeline_graph(
     graph.add_node("agent_pm", make_node("agent_pm", agent_pm, ctx))
     graph.add_node("agent_architect", make_node("agent_architect", agent_architect, ctx))
     graph.add_node("agent_coder", make_node("agent_coder", _coder_with_feedback, ctx))
-    graph.add_node("agent_qa", make_node("agent_qa", agent_qa, ctx))
-    graph.add_node("human_review", make_node("human_review", _review_node, ctx))
+    # In the reviewed pipeline QA never reports done itself; the gate decides.
+    graph.add_node("agent_qa", make_node("agent_qa", _qa_for_review, ctx))
+
+    async def review_node(state: PipelineState) -> dict[str, Any]:
+        return _review_node(state, ctx, review_after)
+
+    graph.add_node("human_review", review_node)
 
     graph.add_edge(START, "agent_pm")
     # Chain nodes up to the review gate.
@@ -173,7 +217,8 @@ def build_reviewed_pipeline_graph(
             node, _route_failure, {"continue": _next(node), "end": END}
         )
 
-    # Review gate routing: approve -> next node, changes -> back to Coder.
+    # Review gate routing: approve -> next node (END when after QA),
+    # changes -> back to Coder.
     graph.add_conditional_edges(
         "human_review",
         _route_after_review,
@@ -203,6 +248,7 @@ def review_resume_changes(feedback: str) -> Command:
 __all__ = [
     "DECISION_APPROVE",
     "DECISION_CHANGES",
+    "DEFAULT_REVIEW_AFTER",
     "build_reviewed_pipeline_graph",
     "review_resume_approve",
     "review_resume_changes",

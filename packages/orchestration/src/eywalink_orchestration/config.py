@@ -40,7 +40,8 @@ def load_pipeline_config(path: str | Path) -> dict[str, Any]:
     Raises:
         FileNotFoundError: if the file does not exist.
         yaml.YAMLError: if the YAML is invalid.
-        ValueError: if the parsed root is not a mapping.
+        ValueError: if the parsed root is not a mapping, or a required key
+            (``pipeline.llm.base_url`` / ``pipeline.llm.model``) is missing.
     """
     p = Path(path)
     if not p.exists():
@@ -52,35 +53,29 @@ def load_pipeline_config(path: str | Path) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise ValueError(f"Pipeline config root must be a mapping, got {type(raw).__name__}")
 
-    # Required keys must be present in the user's YAML — defaults must not
-    # silently mask a config that forgot to declare its LLM endpoint.
+    # Required keys are validated on the USER-provided config (pre-merge), so a
+    # missing llm endpoint is an error instead of being silently filled by the
+    # default. Optional knobs (temperature, timeouts) still merge from defaults.
     _validate_required(raw, str(p))
 
     # Deep-merge user config over defaults so partial files still work.
     merged = _deep_merge(DEFAULT_CONFIG, raw)
-    _validate(merged, str(p))
+    _validate_types(merged, str(p))
     return merged
 
 
 def _validate_required(cfg: dict[str, Any], source: str) -> None:
-    """Raise if required user-facing keys are missing from the raw config.
-
-    ``pipeline.llm.base_url`` and ``pipeline.llm.model`` are load-bearing:
-    they decide which local model server the pipeline talks to, so they must
-    be declared explicitly instead of inherited from defaults.
-    """
-    llm = (cfg.get("pipeline") or {}).get("llm") or {}
+    """Check the fields that must come from the user's config file."""
+    pipeline = cfg.get("pipeline") or {}
+    llm = pipeline.get("llm") or {}
     for key in ("base_url", "model"):
         if not llm.get(key):
             raise ValueError(f"pipeline.llm.{key} is required in {source}")
 
 
-def _validate(cfg: dict[str, Any], source: str) -> None:
+def _validate_types(cfg: dict[str, Any], source: str) -> None:
+    """Type-check the merged config."""
     pipeline = cfg.get("pipeline", {})
-    llm = pipeline.get("llm", {})
-    for key in ("base_url", "model"):
-        if not llm.get(key):
-            raise ValueError(f"pipeline.llm.{key} is required in {source}")
     if not isinstance(pipeline.get("max_steps", 100), int):
         raise ValueError(f"pipeline.max_steps must be an int in {source}")
 

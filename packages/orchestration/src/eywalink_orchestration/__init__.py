@@ -15,6 +15,7 @@ from __future__ import annotations
 __version__ = "0.1.0"
 
 from .agents import AgentContext, agent_architect, agent_coder, agent_pm, agent_qa, make_node
+from .api import get_artifacts, get_status, resume, run_pipeline
 from .config import load_pipeline_config
 from .graph import NODES, build_pipeline_graph
 from .hitl import build_reviewed_pipeline_graph, review_resume_approve, review_resume_changes
@@ -36,13 +37,17 @@ __all__ = [
     "agent_qa",
     "build_pipeline_graph",
     "build_reviewed_pipeline_graph",
+    "get_artifacts",
+    "get_status",
     "load_pipeline_config",
     "load_state",
     "make_initial_state",
     "make_node",
     "mcp_servers_from_config",
+    "resume",
     "review_resume_approve",
     "review_resume_changes",
+    "run_pipeline",
     "run_tool_loop",
     "save_state",
 ]

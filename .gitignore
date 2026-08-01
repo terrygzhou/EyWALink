@@ -43,3 +43,6 @@ __pycache__/
 .temp/
 packages/observability/examples/dashboard.html
 packages/observability/aiops-dashboard.html
+
+# Demo run output (examples/run_pipeline.py writes here)
+packages/orchestration/generated/
