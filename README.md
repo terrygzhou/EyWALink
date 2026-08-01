@@ -12,13 +12,13 @@ EyWALink (www.eywalink.org) is an innovation-driven, open-source organisation de
 
 This monorepo houses the core tools, frameworks, and reference implementations:
 
-| Directory | Description |
-|-----------|-------------|
-| `packages/core/` | Shared utilities, types, and configuration |
-| `packages/deploy/` | Deployment tooling and infrastructure templates |
-| `packages/agents/` | AI agent frameworks and orchestration patterns |
-| `packages/observability/` | Monitoring, tracing, and AIOps tooling |
-| `docs/` | Architecture decision records, guides, and specs |
+| Directory                 | Description                                      |
+| ------------------------- | ------------------------------------------------ |
+| `packages/core/`          | Shared utilities, types, and configuration       |
+| `packages/deploy/`        | Deployment tooling and infrastructure templates  |
+| `packages/agents/`        | AI agent frameworks and orchestration patterns   |
+| `packages/observability/` | Monitoring, tracing, and AIOps tooling           |
+| `docs/`                   | Architecture decision records, guides, and specs |
 
 ## Quick Start
 

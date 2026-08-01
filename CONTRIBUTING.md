@@ -69,20 +69,21 @@ This is a pnpm monorepo. Each package lives under `packages/`:
 - `packages/observability/` — Monitoring and AIOps
 
 When creating a new package:
+
 1. Add to `pnpm-workspace.yaml` if needed
 2. Create `package.json` with appropriate dependencies
-3. Add to root `tsconfig.json` project references
+3. Create a `tsconfig.json` extending the root `tsconfig.json`
 
 ## Tooling
 
-| Tool | Purpose |
-|------|---------|
-| `pre-commit` | Pre-commit hooks (lint, format, security) |
-| `eslint` | JavaScript/TypeScript linting |
-| `ruff` | Python linting and formatting |
-| `tsc` | TypeScript type checking |
-| `vitest` | Unit testing |
-| `GitHub Actions` | CI/CD pipelines |
+| Tool             | Purpose                                   |
+| ---------------- | ----------------------------------------- |
+| `pre-commit`     | Pre-commit hooks (lint, format, security) |
+| `eslint`         | JavaScript/TypeScript linting             |
+| `ruff`           | Python linting and formatting             |
+| `tsc`            | TypeScript type checking                  |
+| `node:test`      | Unit testing (built-in test runner)       |
+| `GitHub Actions` | CI/CD pipelines                           |
 
 ## Reporting Issues
 

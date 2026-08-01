@@ -12,14 +12,7 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "outDir": "dist",
-    "composite": true
+    "outDir": "dist"
   },
-  "exclude": ["node_modules", "dist"],
-  "references": [
-    { "path": "packages/core" },
-    { "path": "packages/deploy" },
-    { "path": "packages/agents" },
-    { "path": "packages/observability" }
-  ]
+  "exclude": ["node_modules", "dist"]
 }
