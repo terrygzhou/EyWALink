@@ -1,0 +1,10 @@
+# ─── EyWALink Gateway — development/test dependencies ────────────────────
+# Install alongside requirements.txt:
+#   uv pip install -r requirements.txt -r requirements-dev.txt
+# Run tests:
+#   pytest tests/
+# ─────────────────────────────────────────────────────────────────────────
+
+pytest>=8.0,<9.0
+pytest-asyncio>=0.24,<1.0
+respx>=0.21,<1.0
