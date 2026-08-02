@@ -33,6 +33,6 @@ export default [
     },
   },
   {
-    ignores: ['node_modules/**', 'dist/**', 'coverage/**', 'pnpm-lock.yaml'],
+    ignores: ['node_modules/**', 'dist/**', 'coverage/**', 'pnpm-lock.yaml', 'orchestration/**'],
   },
 ];

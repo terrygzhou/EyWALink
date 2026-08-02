@@ -2,6 +2,8 @@
 node_modules/
 .pnp.*
 .pnpm-store/
+.venv/
+__pycache__/
 
 # Build output
 dist/
