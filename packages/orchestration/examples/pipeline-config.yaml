@@ -6,11 +6,11 @@ pipeline:
   max_steps: 50
   sequential: true
   llm:
-    base_url: http://localhost:8080    # SGLang / vLLM / any OpenAI-compatible server
+    base_url: http://localhost:8080 # SGLang / vLLM / any OpenAI-compatible server
     model: Qwen3.6-27B-NVFP4
     temperature: 0.2
     max_tokens: 4096
-    timeout_read: 600                 # seconds; local LLMs are slow
+    timeout_read: 600 # seconds; local LLMs are slow
 
 agents:
   pm:
@@ -19,7 +19,7 @@ agents:
     enabled: true
   coder:
     enabled: true
-    chunk_size: 1                     # files per code generation step
+    chunk_size: 1 # files per code generation step
   qa:
     enabled: true
 

@@ -27,11 +27,6 @@ export interface MetricFamily {
   render(): string;
 }
 
-interface SampleSet {
-  labels: LabelValues;
-  labelKey: string;
-}
-
 class CounterImpl implements MetricFamily {
   readonly type = 'counter' as const;
   readonly name: string;
@@ -107,7 +102,10 @@ class HistogramImpl implements MetricFamily {
   readonly name: string;
   readonly help: string;
   readonly buckets: number[];
-  private samples = new Map<string, { labels: LabelValues; buckets: Map<number, number>; sum: number; count: number }>();
+  private samples = new Map<
+    string,
+    { labels: LabelValues; buckets: Map<number, number>; sum: number; count: number }
+  >();
 
   constructor(name: string, help: string, buckets: number[] = DEFAULT_BUCKETS) {
     this.name = name;
@@ -126,7 +124,9 @@ class HistogramImpl implements MetricFamily {
     cur.sum += value;
     cur.count += 1;
     for (const b of this.buckets) {
-      if (value <= b) cur.buckets.set(b, (cur.buckets.get(b) ?? 0) + 1);
+      if (value <= b) {
+        cur.buckets.set(b, (cur.buckets.get(b) ?? 0) + 1);
+      }
     }
     this.samples.set(key, cur);
   }

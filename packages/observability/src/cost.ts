@@ -28,13 +28,24 @@ export function costForTokens(
   defaultPricing: ModelPricing = DEFAULT_PRICING,
 ): number {
   const p = pricing[model] ?? defaultPricing;
-  return (promptTokens / 1_000_000) * p.promptPerM + (completionTokens / 1_000_000) * p.completionPerM;
+  return (
+    (promptTokens / 1_000_000) * p.promptPerM + (completionTokens / 1_000_000) * p.completionPerM
+  );
 }
 
-function scopeMatches(scope: { agentId?: string; workspaceId?: string } | undefined, event: CostEvent): boolean {
-  if (!scope) return true;
-  if (scope.agentId && scope.agentId !== event.agentId) return false;
-  if (scope.workspaceId && scope.workspaceId !== event.workspaceId) return false;
+function scopeMatches(
+  scope: { agentId?: string; workspaceId?: string } | undefined,
+  event: CostEvent,
+): boolean {
+  if (!scope) {
+    return true;
+  }
+  if (scope.agentId && scope.agentId !== event.agentId) {
+    return false;
+  }
+  if (scope.workspaceId && scope.workspaceId !== event.workspaceId) {
+    return false;
+  }
   return true;
 }
 
@@ -64,7 +75,13 @@ export class CostTracker {
     completionTokens: number,
     opts: { workspaceId?: string; timestamp?: number } = {},
   ): CostEvent {
-    const costUsd = costForTokens(model, promptTokens, completionTokens, this.pricing, this.defaultPricing);
+    const costUsd = costForTokens(
+      model,
+      promptTokens,
+      completionTokens,
+      this.pricing,
+      this.defaultPricing,
+    );
     const event: CostEvent = {
       agentId,
       workspaceId: opts.workspaceId,
@@ -86,7 +103,11 @@ export class CostTracker {
   }
 
   /** Spend (USD) for a scope over a period, computed from recorded events. */
-  spend(scope: { agentId?: string; workspaceId?: string } | undefined, period: Budget['period'], now = Date.now()): number {
+  spend(
+    scope: { agentId?: string; workspaceId?: string } | undefined,
+    period: Budget['period'],
+    now = Date.now(),
+  ): number {
     const start = periodStart(period, now);
     return this.events
       .filter((e) => e.timestamp >= start && scopeMatches(scope, e))
@@ -185,8 +206,14 @@ function periodStart(period: Budget['period'], now: number): number {
 }
 
 function scopeLabel(scope: { agentId?: string; workspaceId?: string } | undefined): string {
-  if (!scope) return 'fleet';
-  if (scope.agentId) return `agent:${scope.agentId}`;
-  if (scope.workspaceId) return `workspace:${scope.workspaceId}`;
+  if (!scope) {
+    return 'fleet';
+  }
+  if (scope.agentId) {
+    return `agent:${scope.agentId}`;
+  }
+  if (scope.workspaceId) {
+    return `workspace:${scope.workspaceId}`;
+  }
   return 'fleet';
 }

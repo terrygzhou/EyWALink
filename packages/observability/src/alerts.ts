@@ -6,7 +6,7 @@
  * explicit lifecycle: open -> acknowledged -> resolved.
  */
 
-import type { AlertEvent, AlertRule, AlertSeverity, HealthSnapshot, Incident, IncidentStatus } from './types.js';
+import type { AlertEvent, AlertRule, HealthSnapshot, Incident } from './types.js';
 
 export interface AlertNotifier {
   /** Called when an alert transitions to a new status. */
@@ -32,7 +32,9 @@ function metricValue(snapshot: HealthSnapshot, rule: AlertRule): number {
 
 function ruleMatchesScope(rule: AlertRule, snapshot: HealthSnapshot): boolean {
   const scope = rule.scope ?? {};
-  if (scope.agentId && scope.agentId !== snapshot.agentId) return false;
+  if (scope.agentId && scope.agentId !== snapshot.agentId) {
+    return false;
+  }
   return true;
 }
 
@@ -58,7 +60,9 @@ export class AlertEngine {
   evaluate(snapshot: HealthSnapshot, now = Date.now()): AlertEvent[] {
     const fired: AlertEvent[] = [];
     for (const rule of this.rules) {
-      if (!ruleMatchesScope(rule, snapshot)) continue;
+      if (!ruleMatchesScope(rule, snapshot)) {
+        continue;
+      }
       const value = metricValue(snapshot, rule);
       const hit =
         rule.op === '>'
@@ -68,9 +72,10 @@ export class AlertEngine {
             : rule.op === '>='
               ? value >= rule.threshold
               : value <= rule.threshold;
-      if (!hit) continue;
+      if (!hit) {
+        continue;
+      }
 
-      const key = `${rule.id}:${snapshot.agentId}`;
       const existing = [...this.alerts.values()].find(
         (a) => a.ruleId === rule.id && a.agentId === snapshot.agentId && a.status !== 'resolved',
       );
@@ -89,7 +94,9 @@ export class AlertEngine {
           a.resolvedAt !== undefined &&
           now - a.resolvedAt < cooldownMs,
       );
-      if (recentlyResolved) continue;
+      if (recentlyResolved) {
+        continue;
+      }
 
       const alert: AlertEvent = {
         id: `alert-${++alertSeq}`,
@@ -112,9 +119,11 @@ export class AlertEngine {
     return fired;
   }
 
-  acknowledge(alertId: string, by = 'agent', at = Date.now()): AlertEvent | undefined {
+  acknowledge(alertId: string, _by = 'agent', at = Date.now()): AlertEvent | undefined {
     const alert = this.alerts.get(alertId);
-    if (!alert || alert.status === 'resolved') return undefined;
+    if (!alert || alert.status === 'resolved') {
+      return undefined;
+    }
     alert.status = 'acknowledged';
     alert.acknowledgedAt = at;
     this.notifier?.notify(alert);
@@ -123,7 +132,9 @@ export class AlertEngine {
 
   resolve(alertId: string, at = Date.now()): AlertEvent | undefined {
     const alert = this.alerts.get(alertId);
-    if (!alert) return undefined;
+    if (!alert) {
+      return undefined;
+    }
     alert.status = 'resolved';
     alert.resolvedAt = at;
     this.notifier?.notify(alert);
@@ -151,7 +162,9 @@ export class AlertEngine {
 
     for (const alert of firing) {
       const existing = open.find((i) => i.alertIds.includes(alert.id));
-      if (existing) continue;
+      if (existing) {
+        continue;
+      }
       const related = open.find(
         (i) => i.agentIds.includes(alert.agentId) && i.severity === alert.severity,
       );
@@ -181,19 +194,27 @@ export class AlertEngine {
 
   acknowledgeIncident(incidentId: string, by = 'agent', at = Date.now()): Incident | undefined {
     const incident = this.incidents.find((i) => i.id === incidentId);
-    if (!incident || incident.status === 'resolved') return undefined;
+    if (!incident || incident.status === 'resolved') {
+      return undefined;
+    }
     incident.status = 'acknowledged';
     incident.acknowledgedAt = at;
-    for (const alertId of incident.alertIds) this.acknowledge(alertId, by, at);
+    for (const alertId of incident.alertIds) {
+      this.acknowledge(alertId, by, at);
+    }
     return incident;
   }
 
   resolveIncident(incidentId: string, at = Date.now()): Incident | undefined {
     const incident = this.incidents.find((i) => i.id === incidentId);
-    if (!incident) return undefined;
+    if (!incident) {
+      return undefined;
+    }
     incident.status = 'resolved';
     incident.resolvedAt = at;
-    for (const alertId of incident.alertIds) this.resolve(alertId, at);
+    for (const alertId of incident.alertIds) {
+      this.resolve(alertId, at);
+    }
     return incident;
   }
 

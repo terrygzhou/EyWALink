@@ -9,7 +9,9 @@ test('cost derived from pricing table per model', () => {
   t.record('pm', 'qwen3', 1_000_000, 1_000_000, { workspaceId: 'core', timestamp: T0 });
   assert.equal(t.spend(undefined, 'day', T0), 0.75);
   assert.equal(
-    costForTokens('qwen3', 1_000_000, 1_000_000, { qwen3: { promptPerM: 0.15, completionPerM: 0.6 } }),
+    costForTokens('qwen3', 1_000_000, 1_000_000, {
+      qwen3: { promptPerM: 0.15, completionPerM: 0.6 },
+    }),
     0.75,
   );
   assert.ok(DEFAULT_PRICING.promptPerM > 0);
@@ -47,7 +49,7 @@ test('budget alerts fire once per period and respect scope', () => {
     name: 'core daily',
     scope: { workspaceId: 'core' },
     period: 'day',
-    limitUsd: 0.10,
+    limitUsd: 0.1,
     alertAtPct: 1.0,
   });
   const alerts = t.checkBudgets(T0);

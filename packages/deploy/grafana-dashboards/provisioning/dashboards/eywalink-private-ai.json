@@ -183,7 +183,13 @@
         "defaults": {
           "color": { "mode": "thresholds" },
           "mappings": [
-            { "options": { "0": { "color": "green", "text": "UP" }, "1": { "color": "red", "text": "DOWN" } }, "type": "value" }
+            {
+              "options": {
+                "0": { "color": "green", "text": "UP" },
+                "1": { "color": "red", "text": "DOWN" }
+              },
+              "type": "value"
+            }
           ],
           "thresholds": {
             "mode": "absolute",

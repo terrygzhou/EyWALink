@@ -10,20 +10,20 @@ Loaded by `load_pipeline_config(path)`; validated and deep-merged with
 defaults. Required keys come from the **user's** YAML — defaults never
 silently mask a missing LLM endpoint.
 
-| Key | Required | Default | Notes |
-|---|---|---|---|
-| `pipeline.name` | no | `default` | run label |
-| `pipeline.max_steps` | no | `100` | safety cap on pipeline steps |
-| `pipeline.sequential` | no | `true` | always true in v1 (VRAM budget) |
-| `pipeline.llm.base_url` | **yes** | — | SGLang / vLLM / Ollama endpoint |
-| `pipeline.llm.model` | **yes** | — | model name on that server |
-| `pipeline.llm.temperature` | no | `0.2` | |
-| `pipeline.llm.max_tokens` | no | `4096` | |
-| `pipeline.llm.timeout_read` | no | `600` | seconds; local LLMs are slow |
-| `agents.<name>.enabled` | no | `true` | per-agent toggles |
-| `agents.coder.chunk_size` | no | `1` | files per code generation request |
-| `persistence.status_file` | no | `pipeline-status.json` | durable JSON record |
-| `mcp.servers` | no | `[]` | `[{name, command, args, env?, cwd?}]` |
+| Key                         | Required | Default                | Notes                                 |
+| --------------------------- | -------- | ---------------------- | ------------------------------------- |
+| `pipeline.name`             | no       | `default`              | run label                             |
+| `pipeline.max_steps`        | no       | `100`                  | safety cap on pipeline steps          |
+| `pipeline.sequential`       | no       | `true`                 | always true in v1 (VRAM budget)       |
+| `pipeline.llm.base_url`     | **yes**  | —                      | SGLang / vLLM / Ollama endpoint       |
+| `pipeline.llm.model`        | **yes**  | —                      | model name on that server             |
+| `pipeline.llm.temperature`  | no       | `0.2`                  |                                       |
+| `pipeline.llm.max_tokens`   | no       | `4096`                 |                                       |
+| `pipeline.llm.timeout_read` | no       | `600`                  | seconds; local LLMs are slow          |
+| `agents.<name>.enabled`     | no       | `true`                 | per-agent toggles                     |
+| `agents.coder.chunk_size`   | no       | `1`                    | files per code generation request     |
+| `persistence.status_file`   | no       | `pipeline-status.json` | durable JSON record                   |
+| `mcp.servers`               | no       | `[]`                   | `[{name, command, args, env?, cwd?}]` |
 
 Errors: `ValueError("pipeline.llm.base_url is required ...")` when the LLM
 endpoint is missing; `yaml.YAMLError` on invalid YAML; `FileNotFoundError`
@@ -36,17 +36,17 @@ Example: `packages/orchestration/examples/pipeline-config.yaml`.
 The LangGraph `TypedDict` (see `state.py`) serialized to
 `persistence.status_file` as plain JSON. Key fields:
 
-| Field | Reducer | Semantics |
-|---|---|---|
-| `goal` | last-write-wins | user goal |
-| `phase` | last-write-wins | `init → requirements → architecture → implementation → qa → review → done` |
-| `status` | last-write-wins | `pending / running / blocked / done / failed` |
-| `artifacts` | dict-merge | per-agent sections: `spec`, `architecture`, `code`, `tests`, `qa_report` |
-| `messages` | append | conversation/agent trace |
-| `agent_outputs` | append | per-agent record: `{agent, artifact, ...}` |
-| `steps_completed` | add | progress counter |
-| `reviews_used` | add | HITL review rounds consumed |
-| `tokens_used` | add | cumulative token accounting |
+| Field             | Reducer         | Semantics                                                                  |
+| ----------------- | --------------- | -------------------------------------------------------------------------- |
+| `goal`            | last-write-wins | user goal                                                                  |
+| `phase`           | last-write-wins | `init → requirements → architecture → implementation → qa → review → done` |
+| `status`          | last-write-wins | `pending / running / blocked / done / failed`                              |
+| `artifacts`       | dict-merge      | per-agent sections: `spec`, `architecture`, `code`, `tests`, `qa_report`   |
+| `messages`        | append          | conversation/agent trace                                                   |
+| `agent_outputs`   | append          | per-agent record: `{agent, artifact, ...}`                                 |
+| `steps_completed` | add             | progress counter                                                           |
+| `reviews_used`    | add             | HITL review rounds consumed                                                |
+| `tokens_used`     | add             | cumulative token accounting                                                |
 
 Serialization is atomic (temp file + rename) so a crash never corrupts the
 last checkpoint. `load_state` returns `None` for a missing file.
@@ -71,6 +71,7 @@ reviews_used, error, run_id, updated_at}`. Returns
 ### `resume(decision, *, feedback=None, config=..., status_file=..., thread_id="run-1") -> dict`
 
 Continues a paused run at the human review gate.
+
 - `decision="approve"` — mark the run `done`.
 - `decision="request_changes"` with `feedback` — loop back to the Coder.
 

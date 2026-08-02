@@ -6,14 +6,14 @@ vendor SDKs, no telemetry exfil, no lock-in. Runs on stock Node.
 
 ## Capabilities
 
-| Area | Module | What it does |
-|------|--------|--------------|
-| Agent health monitoring | `health.ts` | Rolling-window latency (p50/p95), error rate, token throughput, composite score, healthy/degraded/critical status |
-| Metrics (Prometheus) | `metrics.ts` | Counters, gauges, histograms; renders Prometheus text exposition for `/metrics` |
-| Alerting & incidents | `alerts.ts` | Declarative rules (metric × operator × threshold), cooldown/dedup, alert lifecycle, incident grouping, notifiers |
-| Cost tracking | `cost.ts` | Per-model pricing (USD/1M tokens), per-agent/workspace spend, budget alerts per period |
-| Degradation detection | `degradation.ts` | EWMA baseline drift on error rate / p95 latency, consecutive-window degradation, automatic retraining trigger |
-| Analytics dashboard | `analytics.ts`, `dashboard.ts` | Per-agent/workspace roll-ups; self-contained offline HTML dashboard |
+| Area                    | Module                         | What it does                                                                                                      |
+| ----------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| Agent health monitoring | `health.ts`                    | Rolling-window latency (p50/p95), error rate, token throughput, composite score, healthy/degraded/critical status |
+| Metrics (Prometheus)    | `metrics.ts`                   | Counters, gauges, histograms; renders Prometheus text exposition for `/metrics`                                   |
+| Alerting & incidents    | `alerts.ts`                    | Declarative rules (metric × operator × threshold), cooldown/dedup, alert lifecycle, incident grouping, notifiers  |
+| Cost tracking           | `cost.ts`                      | Per-model pricing (USD/1M tokens), per-agent/workspace spend, budget alerts per period                            |
+| Degradation detection   | `degradation.ts`               | EWMA baseline drift on error rate / p95 latency, consecutive-window degradation, automatic retraining trigger     |
+| Analytics dashboard     | `analytics.ts`, `dashboard.ts` | Per-agent/workspace roll-ups; self-contained offline HTML dashboard                                               |
 
 ## Quick start
 

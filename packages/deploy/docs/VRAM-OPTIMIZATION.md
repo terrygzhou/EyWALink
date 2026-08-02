@@ -6,13 +6,13 @@ doesn't OOM, while leaving a fallback provider ready. Every knob below is in
 
 ## 1. Model sizing cheat sheet (NVFP4 / FP8-quantized)
 
-| Model size   | Approx VRAM (quantized) | Usable on                |
-| ------------ | ----------------------- | ------------------------ |
-| 7B–8B        | 6–8 GB                  | consumer GPUs (8–12 GB)  |
-| 14B          | 10–14 GB                | 16 GB GPUs               |
-| 27B (default)| 18–22 GB                | 24 GB+ GPUs              |
-| 32B          | 22–26 GB                | 24–32 GB GPUs            |
-| 70B          | 45–55 GB                | 2×24 GB or 80 GB         |
+| Model size    | Approx VRAM (quantized) | Usable on               |
+| ------------- | ----------------------- | ----------------------- |
+| 7B–8B         | 6–8 GB                  | consumer GPUs (8–12 GB) |
+| 14B           | 10–14 GB                | 16 GB GPUs              |
+| 27B (default) | 18–22 GB                | 24 GB+ GPUs             |
+| 32B           | 22–26 GB                | 24–32 GB GPUs           |
+| 70B           | 45–55 GB                | 2×24 GB or 80 GB        |
 
 NVFP4/FP8 quantized checkpoints roughly halve VRAM vs. BF16. If a model fails
 to load, try the quantized checkpoint first, then a smaller model.

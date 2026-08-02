@@ -34,7 +34,10 @@ test('no drift while model stays healthy', () => {
 
 test('error-rate spike degrades and persistent drift triggers retraining', () => {
   const reports: string[] = [];
-  const d = new DegradationDetector({ retrainAfterWindows: 3 }, { onReport: (r) => reports.push(r.status) });
+  const d = new DegradationDetector(
+    { retrainAfterWindows: 3 },
+    { onReport: (r) => reports.push(r.status) },
+  );
 
   // Establish baseline.
   assert.equal(d.evaluate(healthy(), T0), null);

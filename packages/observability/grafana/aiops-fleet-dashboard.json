@@ -72,7 +72,12 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
-          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "showPoints": "never" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
           "unit": "percentunit"
         },
         "overrides": []
@@ -98,7 +103,12 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
-          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "showPoints": "never" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
           "unit": "s"
         },
         "overrides": []
@@ -131,7 +141,12 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
-          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "showPoints": "never" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
           "unit": "short"
         },
         "overrides": []
@@ -191,7 +206,12 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
-          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "showPoints": "never" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
           "unit": "currencyUSD"
         },
         "overrides": []
@@ -307,7 +327,10 @@
         "multi": true,
         "name": "agent",
         "options": [],
-        "query": { "query": "label_values(agent_health_status, agent)", "refId": "Prometheus-agent" },
+        "query": {
+          "query": "label_values(agent_health_status, agent)",
+          "refId": "Prometheus-agent"
+        },
         "refresh": 1,
         "type": "query"
       }

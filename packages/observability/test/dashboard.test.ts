@@ -25,9 +25,36 @@ test('end-to-end: telemetry → alert → snapshot → HTML', () => {
   const now = Date.now();
 
   // Health telemetry: pm healthy, coder slow + erroring.
-  aiops.health.ingest({ agentId: 'pm', workspaceId: 'core', timestamp: now, latencyMs: 120, error: false, promptTokens: 100, completionTokens: 80, model: 'qwen3' });
-  aiops.health.ingest({ agentId: 'coder', workspaceId: 'core', timestamp: now, latencyMs: 3000, error: false, promptTokens: 200, completionTokens: 150, model: 'qwen3' });
-  aiops.health.ingest({ agentId: 'coder', workspaceId: 'core', timestamp: now + 1, latencyMs: 4000, error: true, promptTokens: 50, completionTokens: 10, model: 'qwen3' });
+  aiops.health.ingest({
+    agentId: 'pm',
+    workspaceId: 'core',
+    timestamp: now,
+    latencyMs: 120,
+    error: false,
+    promptTokens: 100,
+    completionTokens: 80,
+    model: 'qwen3',
+  });
+  aiops.health.ingest({
+    agentId: 'coder',
+    workspaceId: 'core',
+    timestamp: now,
+    latencyMs: 3000,
+    error: false,
+    promptTokens: 200,
+    completionTokens: 150,
+    model: 'qwen3',
+  });
+  aiops.health.ingest({
+    agentId: 'coder',
+    workspaceId: 'core',
+    timestamp: now + 1,
+    latencyMs: 4000,
+    error: true,
+    promptTokens: 50,
+    completionTokens: 10,
+    model: 'qwen3',
+  });
 
   // Cost tracking: tiny budget so the alert fires immediately.
   aiops.cost.setPricing('qwen3', { promptPerM: 0.15, completionPerM: 0.6 });

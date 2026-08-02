@@ -10,7 +10,7 @@
  * Out:  examples/dashboard.html
  */
 import { createAIOps } from '../src/index.ts';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -45,21 +45,32 @@ for (let t = 0; t < 60; t += 5) {
 // Pricing + budgets.
 aiops.cost.setPricing('qwen3:8b', { promptPerM: 0.15, completionPerM: 0.6 });
 aiops.cost.addBudget({
-  id: 'platform-day', name: 'platform daily budget',
-  scope: { workspaceId: 'platform' }, period: 'day',
-  limitUsd: 0.02, alertAtPct: 0.8,
+  id: 'platform-day',
+  name: 'platform daily budget',
+  scope: { workspaceId: 'platform' },
+  period: 'day',
+  limitUsd: 0.02,
+  alertAtPct: 0.8,
 });
 
 // Alert rules + evaluation.
 aiops.alerts.addRule({
-  id: 'err-rate', name: 'High error rate',
-  metric: 'error_rate', op: '>=', threshold: 0.2,
-  severity: 'critical', cooldownSeconds: 120,
+  id: 'err-rate',
+  name: 'High error rate',
+  metric: 'error_rate',
+  op: '>=',
+  threshold: 0.2,
+  severity: 'critical',
+  cooldownSeconds: 120,
 });
 aiops.alerts.addRule({
-  id: 'p95-latency', name: 'High p95 latency',
-  metric: 'p95_latency_ms', op: '>=', threshold: 2000,
-  severity: 'warning', cooldownSeconds: 120,
+  id: 'p95-latency',
+  name: 'High p95 latency',
+  metric: 'p95_latency_ms',
+  op: '>=',
+  threshold: 2000,
+  severity: 'warning',
+  cooldownSeconds: 120,
 });
 for (const agent of agents) {
   aiops.alerts.evaluate(aiops.health.snapshot(agent, 300));
@@ -69,10 +80,14 @@ aiops.alerts.syncIncidents();
 
 // Summary to stdout + dashboard to file.
 const snap = aiops.dashboard.snapshot();
-console.log(`fleet: ${snap.fleet.agents} agents ` +
-  `(healthy ${snap.fleet.healthy}, degraded ${snap.fleet.degraded}, critical ${snap.fleet.critical})`);
-console.log(`firing alerts: ${snap.firingAlerts.length}, incidents: ${snap.incidents.length}, ` +
-  `budget alerts: ${snap.budgets.length}, degradation: ${snap.degradation.length}`);
+console.log(
+  `fleet: ${snap.fleet.agents} agents ` +
+    `(healthy ${snap.fleet.healthy}, degraded ${snap.fleet.degraded}, critical ${snap.fleet.critical})`,
+);
+console.log(
+  `firing alerts: ${snap.firingAlerts.length}, incidents: ${snap.incidents.length}, ` +
+    `budget alerts: ${snap.budgets.length}, degradation: ${snap.degradation.length}`,
+);
 console.log(`day cost: $${snap.fleet.totalCostUsd.toFixed(4)}`);
 
 const here = dirname(fileURLToPath(import.meta.url));

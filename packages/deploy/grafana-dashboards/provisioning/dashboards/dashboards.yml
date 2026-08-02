@@ -2,9 +2,9 @@
 apiVersion: 1
 
 providers:
-  - name: "eywalink"
+  - name: 'eywalink'
     orgId: 1
-    folder: "EyWALink"
+    folder: 'EyWALink'
     type: file
     disableDeletion: false
     editable: true

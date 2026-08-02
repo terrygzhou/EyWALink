@@ -27,7 +27,12 @@ export interface DashboardSnapshot {
   budgets: BudgetAlert[];
   incidents: Incident[];
   firingAlerts: AlertEvent[];
-  degradation: Array<Pick<DegradationReport, 'agentId' | 'model' | 'status' | 'severity' | 'reason' | 'retrainTriggered'>>;
+  degradation: Array<
+    Pick<
+      DegradationReport,
+      'agentId' | 'model' | 'status' | 'severity' | 'reason' | 'retrainTriggered'
+    >
+  >;
 }
 
 export interface DashboardSources {
@@ -37,7 +42,10 @@ export interface DashboardSources {
   };
   cost: {
     /** USD spent for a scope over a period. */
-    spend(scope: { agentId?: string; workspaceId?: string } | undefined, period: 'hour' | 'day' | 'month'): number;
+    spend(
+      scope: { agentId?: string; workspaceId?: string } | undefined,
+      period: 'hour' | 'day' | 'month',
+    ): number;
     checkBudgets(now?: number): BudgetAlert[];
   };
   alerts: {
@@ -60,36 +68,34 @@ export class DashboardBuilder {
   }
 
   snapshot(): DashboardSnapshot {
-    const agents = this.sources.health.activeAgents(this.windowSeconds).map((id) =>
-      this.sources.health.snapshot(id, this.windowSeconds),
-    );
+    const agents = this.sources.health
+      .activeAgents(this.windowSeconds)
+      .map((id) => this.sources.health.snapshot(id, this.windowSeconds));
     const fleetCost = this.sources.cost.spend(undefined, 'day');
     const incidents = this.sources.alerts.getIncidents().filter((i) => i.status !== 'resolved');
     const firingAlerts = this.sources.alerts.firingAlerts();
 
-    const degradation = this.sources.degradation
-      .modelStates()
-      .map((s) => {
-        const snap = this.sources.health.snapshot(s.agentId, this.windowSeconds);
-        const report = snap.model ? this.sources.degradation.evaluate(snap) : null;
-        return report
-          ? {
-              agentId: report.agentId,
-              model: report.model,
-              status: report.status,
-              severity: report.severity,
-              reason: report.reason,
-              retrainTriggered: report.retrainTriggered,
-            }
-          : {
-              agentId: s.agentId,
-              model: s.model,
-              status: 'healthy' as const,
-              severity: 'info' as const,
-              reason: 'within baseline',
-              retrainTriggered: false,
-            };
-      });
+    const degradation = this.sources.degradation.modelStates().map((s) => {
+      const snap = this.sources.health.snapshot(s.agentId, this.windowSeconds);
+      const report = snap.model ? this.sources.degradation.evaluate(snap) : null;
+      return report
+        ? {
+            agentId: report.agentId,
+            model: report.model,
+            status: report.status,
+            severity: report.severity,
+            reason: report.reason,
+            retrainTriggered: report.retrainTriggered,
+          }
+        : {
+            agentId: s.agentId,
+            model: s.model,
+            status: 'healthy' as const,
+            severity: 'info' as const,
+            reason: 'within baseline',
+            retrainTriggered: false,
+          };
+    });
 
     return {
       generatedAt: new Date().toISOString(),
@@ -217,5 +223,9 @@ tr.critical td:first-child, .badge.critical { color:var(--crit); }
 }
 
 function esc(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

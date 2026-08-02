@@ -21,13 +21,13 @@ cp .env.example .env
 
 Key settings in `.env`:
 
-| Setting                | Default                        | Meaning                                  |
-|------------------------|--------------------------------|------------------------------------------|
-| `PRIMARY_MODEL`        | `nvidia/Qwen3.6-27B-NVFP4`     | Model served by SGLang                   |
-| `FALLBACK_CHAIN`       | `sglang,vllm,ollama`           | Fallback order (comma-separated)         |
-| `MEM_FRACTION_STATIC`  | `0.89`                         | SGLang VRAM fraction for KV cache        |
-| `SGLANG_GPU` / `VLLM_GPU` | `all`                       | Pin GPUs per service (e.g. `0`, `1`)     |
-| `VLLM_GPU_MEM_UTIL`    | `0.90`                         | vLLM memory utilization target           |
+| Setting                   | Default                    | Meaning                              |
+| ------------------------- | -------------------------- | ------------------------------------ |
+| `PRIMARY_MODEL`           | `nvidia/Qwen3.6-27B-NVFP4` | Model served by SGLang               |
+| `FALLBACK_CHAIN`          | `sglang,vllm,ollama`       | Fallback order (comma-separated)     |
+| `MEM_FRACTION_STATIC`     | `0.89`                     | SGLang VRAM fraction for KV cache    |
+| `SGLANG_GPU` / `VLLM_GPU` | `all`                      | Pin GPUs per service (e.g. `0`, `1`) |
+| `VLLM_GPU_MEM_UTIL`       | `0.90`                     | vLLM memory utilization target       |
 
 ## 2. Start the core stack
 
@@ -64,12 +64,12 @@ curl http://localhost:8000/v1/models
 
 ## 5. Dashboards
 
-| Service    | URL                          | Credentials        |
-|------------|------------------------------|--------------------|
-| API docs   | http://localhost:8000/docs   | —                  |
-| Prometheus | http://localhost:9091        | —                  |
-| Grafana    | http://localhost:3001        | admin / admin      |
-| Phoenix    | http://localhost:6007        | —                  |
+| Service    | URL                        | Credentials   |
+| ---------- | -------------------------- | ------------- |
+| API docs   | http://localhost:8000/docs | —             |
+| Prometheus | http://localhost:9091      | —             |
+| Grafana    | http://localhost:3001      | admin / admin |
+| Phoenix    | http://localhost:6007      | —             |
 
 ## 6. Stop
 

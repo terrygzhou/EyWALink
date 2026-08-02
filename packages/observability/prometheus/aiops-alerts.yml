@@ -20,8 +20,8 @@ groups:
           severity: critical
           aiops: agent-health
         annotations:
-          summary: "Agent {{ $labels.agent }} error rate above 10%"
-          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+          summary: 'Agent {{ $labels.agent }} error rate above 10%'
+          description: 'Error rate is {{ $value | humanizePercentage }} over the last 5 minutes.'
 
       # Degraded error-rate threshold (2%).
       - alert: AgentErrorRateDegraded
@@ -34,8 +34,8 @@ groups:
           severity: warning
           aiops: agent-health
         annotations:
-          summary: "Agent {{ $labels.agent }} error rate above 2%"
-          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+          summary: 'Agent {{ $labels.agent }} error rate above 2%'
+          description: 'Error rate is {{ $value | humanizePercentage }} over the last 5 minutes.'
 
       # p95 latency above 2s (degraded) / 10s (critical).
       - alert: AgentLatencyHigh
@@ -47,8 +47,8 @@ groups:
           severity: warning
           aiops: agent-health
         annotations:
-          summary: "Agent {{ $labels.agent }} p95 latency above 2s"
-          description: "p95 latency is {{ $value }}s over the last 5 minutes."
+          summary: 'Agent {{ $labels.agent }} p95 latency above 2s'
+          description: 'p95 latency is {{ $value }}s over the last 5 minutes.'
 
       - alert: AgentLatencyCritical
         expr: |
@@ -59,8 +59,8 @@ groups:
           severity: critical
           aiops: agent-health
         annotations:
-          summary: "Agent {{ $labels.agent }} p95 latency above 10s"
-          description: "p95 latency is {{ $value }}s over the last minute."
+          summary: 'Agent {{ $labels.agent }} p95 latency above 10s'
+          description: 'p95 latency is {{ $value }}s over the last minute.'
 
       # Agent went silent: no requests for 10 minutes.
       - alert: AgentSilent
@@ -71,8 +71,8 @@ groups:
           severity: warning
           aiops: agent-health
         annotations:
-          summary: "Agent {{ $labels.agent }} is silent"
-          description: "No requests observed from agent {{ $labels.agent }} for 10 minutes."
+          summary: 'Agent {{ $labels.agent }} is silent'
+          description: 'No requests observed from agent {{ $labels.agent }} for 10 minutes.'
 
   - name: eywalink-cost
     rules:
@@ -84,8 +84,8 @@ groups:
           severity: critical
           aiops: cost
         annotations:
-          summary: "Budget {{ $labels.budget }} exceeded"
-          description: "Budget {{ $labels.budget }} ({{ $labels.scope }}) at {{ $value | humanizePercentage }} of limit."
+          summary: 'Budget {{ $labels.budget }} exceeded'
+          description: 'Budget {{ $labels.budget }} ({{ $labels.scope }}) at {{ $value | humanizePercentage }} of limit.'
 
       - alert: AgentBudgetWarning
         expr: agent_budget_pct_used >= 0.8
@@ -94,8 +94,8 @@ groups:
           severity: warning
           aiops: cost
         annotations:
-          summary: "Budget {{ $labels.budget }} nearing limit"
-          description: "Budget {{ $labels.budget }} ({{ $labels.scope }}) at {{ $value | humanizePercentage }} of limit."
+          summary: 'Budget {{ $labels.budget }} nearing limit'
+          description: 'Budget {{ $labels.budget }} ({{ $labels.scope }}) at {{ $value | humanizePercentage }} of limit.'
 
   - name: eywalink-model-health
     rules:
@@ -107,8 +107,8 @@ groups:
           severity: warning
           aiops: model-health
         annotations:
-          summary: "Model {{ $labels.model }} degraded"
-          description: "Degradation score {{ $value }} for model {{ $labels.model }} (agent {{ $labels.agent }})."
+          summary: 'Model {{ $labels.model }} degraded'
+          description: 'Degradation score {{ $value }} for model {{ $labels.model }} (agent {{ $labels.agent }}).'
 
       - alert: ModelRetrainingTriggered
         expr: model_retraining_triggered == 1
@@ -117,5 +117,5 @@ groups:
           severity: critical
           aiops: model-health
         annotations:
-          summary: "Retraining triggered for {{ $labels.model }}"
-          description: "Model {{ $labels.model }} (agent {{ $labels.agent }}) crossed the retraining threshold."
+          summary: 'Retraining triggered for {{ $labels.model }}'
+          description: 'Model {{ $labels.model }} (agent {{ $labels.agent }}) crossed the retraining threshold.'

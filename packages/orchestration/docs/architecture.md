@@ -38,15 +38,15 @@ packages/orchestration/src/eywalink_orchestration/
 `PipelineState` is a LangGraph `TypedDict` with **explicit reducers**
 declared via `typing.Annotated` (LangGraph reads them from the schema):
 
-| Field             | Reducer          | Semantics                                  |
-|-------------------|------------------|--------------------------------------------|
-| `messages`        | `operator.add`   | append conversation trace                  |
-| `agent_outputs`   | `operator.add`   | append per-node trace entries              |
-| `artifacts`       | `merge_artifacts`| dict-merge keyed by artifact name          |
-| `tokens_used`     | `operator.add`   | accumulate                                |
-| `steps_completed` | `operator.add`   | accumulate (used for failure caps)         |
-| `reviews_used`    | `operator.add`   | accumulate (HITL loop guard)               |
-| scalars           | last-write-wins  | `goal`, `phase`, `status`, `error`         |
+| Field             | Reducer           | Semantics                          |
+| ----------------- | ----------------- | ---------------------------------- |
+| `messages`        | `operator.add`    | append conversation trace          |
+| `agent_outputs`   | `operator.add`    | append per-node trace entries      |
+| `artifacts`       | `merge_artifacts` | dict-merge keyed by artifact name  |
+| `tokens_used`     | `operator.add`    | accumulate                         |
+| `steps_completed` | `operator.add`    | accumulate (used for failure caps) |
+| `reviews_used`    | `operator.add`    | accumulate (HITL loop guard)       |
+| scalars           | last-write-wins   | `goal`, `phase`, `status`, `error` |
 
 Phases: `init → requirements → architecture → implementation → qa → done`
 (plus `review` during HITL). Status: `pending | running | blocked | done |
@@ -55,7 +55,7 @@ failed`.
 ### Sequential pipeline (`graph.py`)
 
 `PM → Architect → Coder → QA`, strictly sequential. Each node returns a
-*partial state update* (plain dict); reducers decide append vs overwrite, so
+_partial state update_ (plain dict); reducers decide append vs overwrite, so
 nodes never mutate the incoming state. After every node, a router checks
 `status`; `failed`/`blocked` routes to `END`.
 
@@ -93,14 +93,14 @@ MCP servers are configured in `pipeline-config.yaml` under `mcp.servers`
 
 ## 5. Failure modes
 
-| Failure                          | Behaviour                                    |
-|----------------------------------|----------------------------------------------|
-| LLM timeout (600s read)          | node returns `failed`, router stops pipeline |
-| Empty goal at PM                 | `failed` immediately                         |
-| Coder: empty file plan           | `failed` (nothing to code)                   |
+| Failure                          | Behaviour                                                  |
+| -------------------------------- | ---------------------------------------------------------- |
+| LLM timeout (600s read)          | node returns `failed`, router stops pipeline               |
+| Empty goal at PM                 | `failed` immediately                                       |
+| Coder: empty file plan           | `failed` (nothing to code)                                 |
 | Coder: LLM returns empty content | recorded as failure, pipeline continues to QA which blocks |
-| QA static validation fails       | `blocked`, no further work                   |
-| HITL changes exceed `max_steps`  | `failed` (loop guard)                        |
+| QA static validation fails       | `blocked`, no further work                                 |
+| HITL changes exceed `max_steps`  | `failed` (loop guard)                                      |
 
 ## 6. Operations notes
 

@@ -38,11 +38,7 @@ export interface HealthSnapshot {
 export type AlertSeverity = 'info' | 'warning' | 'critical';
 
 export type AlertMetric =
-  | 'error_rate'
-  | 'p95_latency_ms'
-  | 'tokens_per_minute'
-  | 'request_rate'
-  | 'cost_per_hour';
+  'error_rate' | 'p95_latency_ms' | 'tokens_per_minute' | 'request_rate' | 'cost_per_hour';
 
 export interface AlertRule {
   id: string;

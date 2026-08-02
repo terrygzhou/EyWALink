@@ -25,7 +25,7 @@ services:
     container_name: eywalink-gateway
     restart: unless-stopped
     ports:
-      - "${GATEWAY_PORT:-8000}:8000"
+      - '${GATEWAY_PORT:-8000}:8000'
     environment:
       - GATEWAY_FALLBACK_CHAIN=${FALLBACK_CHAIN:-sglang,vllm,ollama}
       - GATEWAY_SGLANG_URL=http://sglang:8080
@@ -56,8 +56,8 @@ services:
     restart: unless-stopped
     gpus: all
     ports:
-      - "${SGLANG_PORT:-8080}:8080"
-    shm_size: "32g"
+      - '${SGLANG_PORT:-8080}:8080'
+    shm_size: '32g'
     environment:
       - NVIDIA_VISIBLE_DEVICES=${SGLANG_GPU:-all}
     volumes:
@@ -92,10 +92,10 @@ services:
     image: vllm/vllm-openai:latest
     container_name: eywalink-vllm
     restart: unless-stopped
-    profiles: ["fallback"]
+    profiles: ['fallback']
     gpus: all
     ports:
-      - "${VLLM_PORT:-8001}:8000"
+      - '${VLLM_PORT:-8001}:8000'
     environment:
       - NVIDIA_VISIBLE_DEVICES=${VLLM_GPU:-all}
     volumes:
@@ -124,9 +124,9 @@ services:
     image: ollama/ollama:latest
     container_name: eywalink-ollama
     restart: unless-stopped
-    profiles: ["fallback"]
+    profiles: ['fallback']
     ports:
-      - "${OLLAMA_PORT:-11434}:11434"
+      - '${OLLAMA_PORT:-11434}:11434'
     volumes:
       - ollama_data:/root/.ollama
     networks:
@@ -139,8 +139,8 @@ services:
     container_name: eywalink-qdrant
     restart: unless-stopped
     ports:
-      - "${QDRANT_PORT:-6333}:6333"
-      - "${QDRANT_API_PORT:-6334}:6334"
+      - '${QDRANT_PORT:-6333}:6333'
+      - '${QDRANT_API_PORT:-6334}:6334'
     volumes:
       - qdrant_data:/qdrant/storage
     environment:
@@ -155,13 +155,13 @@ services:
     container_name: eywalink-prometheus
     restart: unless-stopped
     ports:
-      - "${PROMETHEUS_PORT:-9091}:9090"
+      - '${PROMETHEUS_PORT:-9091}:9090'
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.retention.time=15d"
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
     networks:
       - observability
 
@@ -171,7 +171,7 @@ services:
     container_name: eywalink-grafana
     restart: unless-stopped
     ports:
-      - "${GRAFANA_PORT:-3001}:3000"
+      - '${GRAFANA_PORT:-3001}:3000'
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana-dashboards/provisioning:/etc/grafana/provisioning:ro
@@ -188,7 +188,7 @@ services:
     container_name: eywalink-phoenix
     restart: unless-stopped
     ports:
-      - "${PHOENIX_PORT:-6007}:6006"
+      - '${PHOENIX_PORT:-6007}:6006'
     volumes:
       - phoenix_data:/app/server/phoenix.db
     networks:
@@ -200,7 +200,7 @@ services:
     container_name: eywalink-loki
     restart: unless-stopped
     ports:
-      - "${LOKI_PORT:-3101}:3100"
+      - '${LOKI_PORT:-3101}:3100'
     volumes:
       - loki_data:/loki
     networks:
@@ -212,9 +212,9 @@ services:
     container_name: eywalink-otel
     restart: unless-stopped
     ports:
-      - "4319:4317"
-      - "4320:4318"
-      - "8890:8889"
+      - '4319:4317'
+      - '4320:4318'
+      - '8890:8889'
     volumes:
       - ./otel-collector/config.yml:/etc/otelcol/config.yml:ro
     depends_on:

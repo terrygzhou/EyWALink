@@ -8,26 +8,26 @@ OpenAI-compatible (`/v1/chat/completions`).
 ```yaml
 pipeline:
   name: software-build
-  max_steps: 50          # int; HITL loop guard too
-  sequential: true       # reserved; only sequential is supported today
+  max_steps: 50 # int; HITL loop guard too
+  sequential: true # reserved; only sequential is supported today
   llm:
-    base_url: http://localhost:8080   # required
-    model: Qwen3.6-27B-NVFP4          # required
+    base_url: http://localhost:8080 # required
+    model: Qwen3.6-27B-NVFP4 # required
     temperature: 0.2
     max_tokens: 4096
-    timeout_read: 600                 # seconds
+    timeout_read: 600 # seconds
 
 agents:
-  pm:        { enabled: true }
+  pm: { enabled: true }
   architect: { enabled: true }
-  coder:     { enabled: true, chunk_size: 1 }   # files per generation request
-  qa:        { enabled: true }
+  coder: { enabled: true, chunk_size: 1 } # files per generation request
+  qa: { enabled: true }
 
-mcp:                                    # optional; MCP tool servers
+mcp: # optional; MCP tool servers
   servers:
     - name: my-server
       command: npx
-      args: ["-y", "@scope/mcp-server"]
+      args: ['-y', '@scope/mcp-server']
       # env: {...}, cwd: "/path"        # optional
 
 persistence:
@@ -49,12 +49,22 @@ Loading: `load_pipeline_config(path)` deep-merges user YAML over
   "run_id": "…",
   "review_feedback": null,
   "reviews_used": 0,
-  "messages": [{"role": "system", "content": "…"}],
-  "agent_outputs": [{"agent": "agent_pm", "artifact": "spec", "title": "…"}],
+  "messages": [{ "role": "system", "content": "…" }],
+  "agent_outputs": [{ "agent": "agent_pm", "artifact": "spec", "title": "…" }],
   "artifacts": {
-    "spec": { "title": "…", "summary": "…", "requirements": [], "acceptance_criteria": [], "out_of_scope": [] },
+    "spec": {
+      "title": "…",
+      "summary": "…",
+      "requirements": [],
+      "acceptance_criteria": [],
+      "out_of_scope": []
+    },
     "architecture": { "overview": "…", "components": [], "file_plan": [], "risks": [] },
-    "code": { "files": [{"path": "src/app.py", "language": "python", "content": "…"}], "chunk_size": 1, "failures": [] },
+    "code": {
+      "files": [{ "path": "src/app.py", "language": "python", "content": "…" }],
+      "chunk_size": 1,
+      "failures": []
+    },
     "tests": { "test_plan": [], "test_files": [] },
     "qa_report": { "passed": true, "checks": [], "files_validated": 1 }
   },
@@ -100,12 +110,12 @@ returning a **partial update**. Nodes never mutate input state.
 
 Per-agent artifact keys:
 
-| Node           | Writes `artifacts[...]` | Requires                        |
-|----------------|-------------------------|---------------------------------|
-| `agent_pm`     | `spec`                  | `goal`                          |
-| `agent_architect` | `architecture`       | `artifacts.spec`                |
-| `agent_coder`  | `code` (+ files on disk under `workdir`) | `artifacts.architecture.file_plan` |
-| `agent_qa`     | `tests`, `qa_report`    | `artifacts.code` (validates; blocks on bad code) |
+| Node              | Writes `artifacts[...]`                  | Requires                                         |
+| ----------------- | ---------------------------------------- | ------------------------------------------------ |
+| `agent_pm`        | `spec`                                   | `goal`                                           |
+| `agent_architect` | `architecture`                           | `artifacts.spec`                                 |
+| `agent_coder`     | `code` (+ files on disk under `workdir`) | `artifacts.architecture.file_plan`               |
+| `agent_qa`        | `tests`, `qa_report`                     | `artifacts.code` (validates; blocks on bad code) |
 
 ## 5. MCP integration contract
 
@@ -154,16 +164,16 @@ Interrupt payload:
   "type": "human_review",
   "phase": "implementation",
   "review_after": "agent_coder",
-  "summary": {"spec": {}, "architecture": {}, "code_files": ["src/app.py"]}
+  "summary": { "spec": {}, "architecture": {}, "code_files": ["src/app.py"] }
 }
 ```
 
 ## 7. Error taxonomy
 
-| Exception      | Raised by                      | Meaning                          |
-|----------------|--------------------------------|----------------------------------|
-| `LLMError`     | llm / mcp                      | LLM or MCP call failed           |
-| `LLMTimeoutError` | llm                         | read timeout exceeded            |
-| `ValueError`   | config / hitl                  | bad config or `review_after`     |
-| `FileNotFoundError` | config                   | pipeline YAML missing            |
-| `KeyError`     | ToolRegistry                   | unknown tool name                |
+| Exception           | Raised by     | Meaning                      |
+| ------------------- | ------------- | ---------------------------- |
+| `LLMError`          | llm / mcp     | LLM or MCP call failed       |
+| `LLMTimeoutError`   | llm           | read timeout exceeded        |
+| `ValueError`        | config / hitl | bad config or `review_after` |
+| `FileNotFoundError` | config        | pipeline YAML missing        |
+| `KeyError`          | ToolRegistry  | unknown tool name            |

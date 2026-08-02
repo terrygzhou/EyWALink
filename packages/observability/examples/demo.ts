@@ -77,8 +77,12 @@ aiops.alerts.syncIncidents();
 
 // Print summary + write dashboard.
 const snap = aiops.dashboard.snapshot();
-console.log(`Fleet: ${snap.fleet.agents} agents | healthy=${snap.fleet.healthy} degraded=${snap.fleet.degraded} critical=${snap.fleet.critical}`);
-console.log(`Alerts firing: ${snap.firingAlerts.length} | incidents: ${snap.incidents.length} | budget alerts: ${snap.budgets.length}`);
+console.log(
+  `Fleet: ${snap.fleet.agents} agents | healthy=${snap.fleet.healthy} degraded=${snap.fleet.degraded} critical=${snap.fleet.critical}`,
+);
+console.log(
+  `Alerts firing: ${snap.firingAlerts.length} | incidents: ${snap.incidents.length} | budget alerts: ${snap.budgets.length}`,
+);
 
 import { writeFileSync } from 'node:fs';
 writeFileSync('aiops-dashboard.html', aiops.dashboard.renderHtml());

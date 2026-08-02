@@ -31,7 +31,7 @@ Each provider has a per-instance circuit breaker in
 - **Half-open**: after cooldown, the first provider in the chain is probed
   with a lightweight `/health` call; success resets it, failure reopens it.
 
-This prevents a dead primary from eating a timeout on *every* request — after
+This prevents a dead primary from eating a timeout on _every_ request — after
 3 failures it's skipped for 30s and the chain falls through immediately.
 
 Tunable by editing the two module constants, or promote them to settings if
@@ -51,8 +51,12 @@ the whole fleet is running on degraded capacity.
 {
   "status": "ok",
   "providers": {
-    "sglang": { "circuit_open": false, "consecutive_failures": 0,
-                "model": "nvidia/Qwen3.6-27B-NVFP4", "url": "http://sglang:8080" }
+    "sglang": {
+      "circuit_open": false,
+      "consecutive_failures": 0,
+      "model": "nvidia/Qwen3.6-27B-NVFP4",
+      "url": "http://sglang:8080"
+    }
   },
   "fallback_chain": ["sglang", "vllm", "ollama"]
 }

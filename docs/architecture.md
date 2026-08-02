@@ -10,6 +10,7 @@ multi-agent pipelines that run entirely on their own hardware (SGLang / vLLM /
 Ollama on a single GPU), with no vendor dependency.
 
 **Framework selection: LangGraph (confirmed).** Rationale:
+
 - Explicit state machine (nodes + edges + reducers) matches our sequential,
   human-in-the-loop pipeline model exactly.
 - `TypedDict` state with per-field reducers gives compile-time-ish safety and
@@ -40,8 +41,8 @@ Ollama on a single GPU), with no vendor dependency.
   Qdrant vectors, Prometheus metrics, OTel traces
 ```
 
-The orchestration package is the *agent* control plane; the gateway is the
-*LLM* data plane. They communicate via the OpenAI-compatible API only.
+The orchestration package is the _agent_ control plane; the gateway is the
+_LLM_ data plane. They communicate via the OpenAI-compatible API only.
 
 ## 3. Pipeline State Machine
 
@@ -50,14 +51,14 @@ Phases (from `state.py`): `init → requirements → architecture → implementa
 
 **State fields and reducers:**
 
-| Field | Reducer | Semantics |
-|---|---|---|
-| `messages` | `operator.add` | append conversation turns |
-| `agent_outputs` | `operator.add` | append per-agent trace records |
-| `artifacts` | `merge_artifacts` | dict-merge keyed by artifact name (each agent owns a section) |
-| `tokens_used` | `operator.add` | cumulative token accounting |
-| `steps_completed` | `operator.add` | progress counter |
-| scalars (`goal`, `phase`, `status`) | last-write-wins | single-writer sequential steps |
+| Field                               | Reducer           | Semantics                                                     |
+| ----------------------------------- | ----------------- | ------------------------------------------------------------- |
+| `messages`                          | `operator.add`    | append conversation turns                                     |
+| `agent_outputs`                     | `operator.add`    | append per-agent trace records                                |
+| `artifacts`                         | `merge_artifacts` | dict-merge keyed by artifact name (each agent owns a section) |
+| `tokens_used`                       | `operator.add`    | cumulative token accounting                                   |
+| `steps_completed`                   | `operator.add`    | progress counter                                              |
+| scalars (`goal`, `phase`, `status`) | last-write-wins   | single-writer sequential steps                                |
 
 **Sequential execution is mandatory** — no parallel requests — because local
 LLM inference on a single GPU contends for VRAM (one model resident at a time).
@@ -65,12 +66,12 @@ This is an explicit product constraint, not an optimization detail.
 
 ## 4. Agent Nodes (EYW-8)
 
-| Node | Input phase | Produces (artifacts key) |
-|---|---|---|
-| `agent_pm` | requirements | `requirements.md` (spec) |
-| `agent_architect` | architecture | `architecture.md` |
-| `agent_coder` | implementation | `code/` (chunked, file-by-file) |
-| `agent_qa` | qa | `tests.md` + validation results |
+| Node              | Input phase    | Produces (artifacts key)        |
+| ----------------- | -------------- | ------------------------------- |
+| `agent_pm`        | requirements   | `requirements.md` (spec)        |
+| `agent_architect` | architecture   | `architecture.md`               |
+| `agent_coder`     | implementation | `code/` (chunked, file-by-file) |
+| `agent_qa`        | qa             | `tests.md` + validation results |
 
 Each node: reads `PipelineState`, runs LLM via `LLMClient`, returns a partial
 state update merged by the reducers above. Chunked generation is a hard rule
@@ -81,6 +82,7 @@ quality and VRAM budget).
 
 First end-to-end workflow includes a review gate **between `qa` and `done`**
 (shipped in EYW-13):
+
 - LangGraph interrupt at the review node (after `agent_qa`, before done).
 - The run pauses with `status=running`; QA's validation outcome lives in
   `artifacts.qa_report.passed` (a failed validation stops the run as

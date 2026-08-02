@@ -48,14 +48,14 @@ Change `GRAFANA_PASSWORD` from the default immediately.
 
 All state lives in named volumes:
 
-| Volume              | Contents                     | Backup strategy                    |
-| ------------------- | ---------------------------- | ---------------------------------- |
-| `eywalink-hf-cache` | model weights                | re-downloadable; skip or snapshot  |
-| `eywalink-qdrant`   | vectors + payloads           | **back up** (snapshot/restore API) |
-| `eywalink-grafana`  | dashboards, users            | re-provisionable; snapshot         |
-| `eywalink-phoenix`  | trace database               | snapshot                          |
-| `eywalink-loki`     | logs                         | snapshot                          |
-| `eywalink-ollama`   | ollama models                | re-pullable                        |
+| Volume              | Contents           | Backup strategy                    |
+| ------------------- | ------------------ | ---------------------------------- |
+| `eywalink-hf-cache` | model weights      | re-downloadable; skip or snapshot  |
+| `eywalink-qdrant`   | vectors + payloads | **back up** (snapshot/restore API) |
+| `eywalink-grafana`  | dashboards, users  | re-provisionable; snapshot         |
+| `eywalink-phoenix`  | trace database     | snapshot                           |
+| `eywalink-loki`     | logs               | snapshot                           |
+| `eywalink-ollama`   | ollama models      | re-pullable                        |
 
 Qdrant has a native snapshot API:
 

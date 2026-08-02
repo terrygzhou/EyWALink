@@ -24,18 +24,18 @@ holds your models, vectors, or telemetry.
 
 ## Components
 
-| Component   | Role                                   | Location                  |
-| ----------- | -------------------------------------- | ------------------------- |
-| `gateway`   | FastAPI app, fallback router, metrics  | `packages/gateway/`       |
-| `deploy`    | Compose stack, observability configs   | `packages/deploy/`        |
-| SGLang      | Primary LLM serving (GPU)              | compose service `sglang`  |
-| vLLM        | Secondary LLM (speculative decoding)   | compose service `vllm`    |
-| Ollama      | CPU-friendly last resort               | compose service `ollama`  |
-| Qdrant      | Vector database                        | compose service `qdrant`  |
-| Prometheus  | Metrics scraping                       | compose service           |
-| Grafana     | Dashboards (provisioned)               | compose service           |
-| Phoenix     | LLM trace inspection                   | compose service           |
-| Loki        | Log aggregation                        | compose service           |
+| Component  | Role                                  | Location                 |
+| ---------- | ------------------------------------- | ------------------------ |
+| `gateway`  | FastAPI app, fallback router, metrics | `packages/gateway/`      |
+| `deploy`   | Compose stack, observability configs  | `packages/deploy/`       |
+| SGLang     | Primary LLM serving (GPU)             | compose service `sglang` |
+| vLLM       | Secondary LLM (speculative decoding)  | compose service `vllm`   |
+| Ollama     | CPU-friendly last resort              | compose service `ollama` |
+| Qdrant     | Vector database                       | compose service `qdrant` |
+| Prometheus | Metrics scraping                      | compose service          |
+| Grafana    | Dashboards (provisioned)              | compose service          |
+| Phoenix    | LLM trace inspection                  | compose service          |
+| Loki       | Log aggregation                       | compose service          |
 
 ## Quickstart
 

@@ -39,13 +39,13 @@ Subsequent starts reuse them.
 
 ## 4. Verify
 
-| Check                          | Command                                          |
-| ------------------------------ | ------------------------------------------------ |
-| Gateway health                 | `curl localhost:8000/v1/health`                  |
-| Model list                     | `curl localhost:8000/v1/models`                  |
-| Prometheus targets             | `curl localhost:9091/api/v1/targets`             |
-| Grafana                        | http://localhost:3001 (admin / admin)            |
-| Phoenix traces                 | http://localhost:6007                            |
+| Check              | Command                               |
+| ------------------ | ------------------------------------- |
+| Gateway health     | `curl localhost:8000/v1/health`       |
+| Model list         | `curl localhost:8000/v1/models`       |
+| Prometheus targets | `curl localhost:9091/api/v1/targets`  |
+| Grafana            | http://localhost:3001 (admin / admin) |
+| Phoenix traces     | http://localhost:6007                 |
 
 ## 5. Send a request
 

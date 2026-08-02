@@ -39,12 +39,16 @@ test('healthy agent: low error rate, fast latency, healthy status', () => {
 
 test('degraded and critical on error-rate thresholds', () => {
   const m = new HealthMonitor();
-  for (let i = 0; i < 10; i++) m.ingest(sample({ error: i < 2, timestamp: T0 + i }));
+  for (let i = 0; i < 10; i++) {
+    m.ingest(sample({ error: i < 2, timestamp: T0 + i }));
+  }
   const degraded = m.snapshot('pm', 300);
   assert.equal(degraded.errorRate, 0.2);
   assert.equal(degraded.status, 'degraded');
 
-  for (let i = 10; i < 20; i++) m.ingest(sample({ error: true, timestamp: T0 + i }));
+  for (let i = 10; i < 20; i++) {
+    m.ingest(sample({ error: true, timestamp: T0 + i }));
+  }
   const critical = m.snapshot('pm', 300);
   assert.equal(critical.errorRate, 0.6);
   assert.equal(critical.status, 'critical');
@@ -53,7 +57,9 @@ test('degraded and critical on error-rate thresholds', () => {
 
 test('unknown agents and token throughput', () => {
   const m = new HealthMonitor();
-  for (let i = 0; i < 10; i++) m.ingest(sample({ timestamp: T0 + i * 6000 }));
+  for (let i = 0; i < 10; i++) {
+    m.ingest(sample({ timestamp: T0 + i * 6000 }));
+  }
   const unknown = m.snapshot('nobody', 300);
   assert.equal(unknown.status, 'unknown');
   assert.equal(unknown.requests, 0);

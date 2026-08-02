@@ -18,7 +18,7 @@ persistence, and open-source frameworks only.
   - `agent_coder` — chunked code generation (file-by-file, never whole repo)
   - `agent_qa` — test generation + deterministic static validation
 - `graph.py` — `build_pipeline_graph()`: sequential `PM -> Architect ->
-  Coder -> QA` wiring with failure routing (no parallel requests — VRAM
+Coder -> QA` wiring with failure routing (no parallel requests — VRAM
   contention on local model servers).
 - `hitl.py` — `build_reviewed_pipeline_graph()`: human review gate
   **between QA and done** (LangGraph interrupt + checkpointer-backed

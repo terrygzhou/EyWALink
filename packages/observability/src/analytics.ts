@@ -35,11 +35,15 @@ export interface WorkspacePerformance {
 }
 
 function percentile(sorted: number[], p: number): number {
-  if (sorted.length === 0) return 0;
+  if (sorted.length === 0) {
+    return 0;
+  }
   const idx = (p / 100) * (sorted.length - 1);
   const lo = Math.floor(idx);
   const hi = Math.ceil(idx);
-  if (lo === hi) return sorted[lo];
+  if (lo === hi) {
+    return sorted[lo];
+  }
   const frac = idx - lo;
   return sorted[lo] * (1 - frac) + sorted[hi] * frac;
 }
@@ -106,7 +110,11 @@ export class AnalyticsEngine {
   fleetPerformance(windowSeconds = 300): AgentPerformance[] {
     const cutoff = Date.now() - windowSeconds * 1000;
     const agents = new Set<string>();
-    for (const s of this.samples) if (s.timestamp >= cutoff) agents.add(s.agentId);
+    for (const s of this.samples) {
+      if (s.timestamp >= cutoff) {
+        agents.add(s.agentId);
+      }
+    }
     return [...agents].map((a) => this.agentPerformance(a, windowSeconds));
   }
 
@@ -115,7 +123,9 @@ export class AnalyticsEngine {
     const cutoff = Date.now() - windowSeconds * 1000;
     const byWorkspace = new Map<string, HealthSample[]>();
     for (const s of this.samples) {
-      if (s.timestamp < cutoff || !s.workspaceId) continue;
+      if (s.timestamp < cutoff || !s.workspaceId) {
+        continue;
+      }
       const list = byWorkspace.get(s.workspaceId) ?? [];
       list.push(s);
       byWorkspace.set(s.workspaceId, list);

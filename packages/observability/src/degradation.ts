@@ -62,7 +62,9 @@ export class DegradationDetector {
    * when a retraining trigger fires. Returns null when healthy.
    */
   evaluate(snapshot: HealthSnapshot, now = Date.now()): DegradationReport | null {
-    if (!snapshot.model || snapshot.requests === 0) return null;
+    if (!snapshot.model || snapshot.requests === 0) {
+      return null;
+    }
     const key = `${snapshot.agentId}:${snapshot.model}`;
     let state = this.state.get(key);
     if (!state) {
@@ -85,7 +87,8 @@ export class DegradationDetector {
     const baselineErr = state.errorRateBaseline;
     const baselineLat = state.p95LatencyBaseline;
 
-    const errDrift = baselineErr > 0 ? snapshot.errorRate / baselineErr : snapshot.errorRate > 0 ? Infinity : 0;
+    const errDrift =
+      baselineErr > 0 ? snapshot.errorRate / baselineErr : snapshot.errorRate > 0 ? Infinity : 0;
     const latDrift = baselineLat > 0 ? snapshot.p95LatencyMs / baselineLat : 0;
 
     const delta: Record<string, number> = {
@@ -122,7 +125,8 @@ export class DegradationDetector {
 
     // Update baselines with EWMA.
     state.errorRateBaseline = alpha * snapshot.errorRate + (1 - alpha) * baselineErr;
-    state.p95LatencyBaseline = alpha * (snapshot.p95LatencyMs || baselineLat) + (1 - alpha) * baselineLat;
+    state.p95LatencyBaseline =
+      alpha * (snapshot.p95LatencyMs || baselineLat) + (1 - alpha) * baselineLat;
     state.lastStatus = status;
     state.lastSeverity = severity;
     state.lastReason = reason;
@@ -162,7 +166,13 @@ export class DegradationDetector {
   }
 
   /** Get the current model states (for dashboards/debugging). */
-  modelStates(): Array<{ agentId: string; model: string; errorRateBaseline: number; p95LatencyBaseline: number; consecutiveDegraded: number }> {
+  modelStates(): Array<{
+    agentId: string;
+    model: string;
+    errorRateBaseline: number;
+    p95LatencyBaseline: number;
+    consecutiveDegraded: number;
+  }> {
     return [...this.state.values()].map((s) => ({
       agentId: s.agentId,
       model: s.model,

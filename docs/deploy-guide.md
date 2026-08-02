@@ -32,18 +32,18 @@ gateway at another OpenAI-compatible endpoint — no vendor lock-in.
 
 ## Services
 
-| Service         | Purpose                                        | Default port |
-|-----------------|------------------------------------------------|--------------|
-| `gateway`       | FastAPI app layer, fallback routing            | 8000         |
-| `sglang`        | Primary LLM serving (GPU)                      | 8080         |
-| `vllm`          | Secondary LLM (profile: fallback)              | 8001         |
-| `ollama`        | CPU-friendly last resort (profile: fallback)   | 11434        |
-| `qdrant`        | Vector DB for RAG                              | 6333/6334    |
-| `prometheus`    | Metrics scraping                               | 9091         |
-| `grafana`       | Dashboards (provisioned)                       | 3001         |
-| `phoenix`       | LLM trace observability                        | 6007         |
-| `loki`          | Log aggregation                                | 3101         |
-| `otel-collector`| OTLP ingestion, fan-out                        | 4319/4320    |
+| Service          | Purpose                                      | Default port |
+| ---------------- | -------------------------------------------- | ------------ |
+| `gateway`        | FastAPI app layer, fallback routing          | 8000         |
+| `sglang`         | Primary LLM serving (GPU)                    | 8080         |
+| `vllm`           | Secondary LLM (profile: fallback)            | 8001         |
+| `ollama`         | CPU-friendly last resort (profile: fallback) | 11434        |
+| `qdrant`         | Vector DB for RAG                            | 6333/6334    |
+| `prometheus`     | Metrics scraping                             | 9091         |
+| `grafana`        | Dashboards (provisioned)                     | 3001         |
+| `phoenix`        | LLM trace observability                      | 6007         |
+| `loki`           | Log aggregation                              | 3101         |
+| `otel-collector` | OTLP ingestion, fan-out                      | 4319/4320    |
 
 ## GPU and VRAM Management
 
@@ -135,14 +135,14 @@ docker compose down -v
 
 ## Troubleshooting
 
-| Symptom                              | Fix                                                        |
-|--------------------------------------|------------------------------------------------------------|
-| SGLang OOM at startup                | Lower `MEM_FRACTION_STATIC`, use a smaller `PRIMARY_MODEL` |
-| `shared memory` errors               | Raise `shm_size` (already 32g; check host `/dev/shm`)      |
-| Gateway 503 `all providers failed`   | Check `attempted`/`health` in the response; restart the dead backend |
-| Model not found at startup           | Check the `eywalink-hf-cache` volume; allow time for the first download |
-| Grafana shows no data                | Verify Prometheus is up and dashboard datasource is `Prometheus` |
-| Traces missing in Phoenix            | Check `otel-collector` logs; gateway falls back silently if OTLP is down |
+| Symptom                            | Fix                                                                      |
+| ---------------------------------- | ------------------------------------------------------------------------ |
+| SGLang OOM at startup              | Lower `MEM_FRACTION_STATIC`, use a smaller `PRIMARY_MODEL`               |
+| `shared memory` errors             | Raise `shm_size` (already 32g; check host `/dev/shm`)                    |
+| Gateway 503 `all providers failed` | Check `attempted`/`health` in the response; restart the dead backend     |
+| Model not found at startup         | Check the `eywalink-hf-cache` volume; allow time for the first download  |
+| Grafana shows no data              | Verify Prometheus is up and dashboard datasource is `Prometheus`         |
+| Traces missing in Phoenix          | Check `otel-collector` logs; gateway falls back silently if OTLP is down |
 
 ## Zero Lock-In Notes
 

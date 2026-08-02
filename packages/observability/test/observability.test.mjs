@@ -110,7 +110,8 @@ test('alert engine scope filter excludes other agents', () => {
     scope: { agentId: 'agent-a' },
   });
   const m = new HealthMonitor();
-  for (let i = 0; i < 10; i++) m.ingest(sample({ agentId: 'agent-b', error: true, timestamp: T0 + i }));
+  for (let i = 0; i < 10; i++)
+    m.ingest(sample({ agentId: 'agent-b', error: true, timestamp: T0 + i }));
   assert.equal(engine.evaluate(m.snapshot('agent-b', 300), T0 + 1000).length, 0);
 });
 
@@ -164,7 +165,12 @@ test('cost tracker converts tokens and fires budget alerts once per period', () 
   });
   t.record('agent-a', 'qwen3:8b', 1_000_000, 0, { workspaceId: 'ws-1', timestamp: T0 });
   assert.equal(t.spend(undefined, 'day', T0), 0.15);
-  assert.equal(costForTokens('qwen3:8b', 1_000_000, 1_000_000, { 'qwen3:8b': { promptPerM: 0.15, completionPerM: 0.6 } }), 0.75);
+  assert.equal(
+    costForTokens('qwen3:8b', 1_000_000, 1_000_000, {
+      'qwen3:8b': { promptPerM: 0.15, completionPerM: 0.6 },
+    }),
+    0.75,
+  );
   assert.ok(DEFAULT_PRICING.promptPerM > 0);
 
   t.addBudget({
@@ -172,7 +178,7 @@ test('cost tracker converts tokens and fires budget alerts once per period', () 
     name: 'ws-1 daily',
     scope: { workspaceId: 'ws-1' },
     period: 'day',
-    limitUsd: 0.10,
+    limitUsd: 0.1,
     alertAtPct: 1.0,
   });
   const alerts = t.checkBudgets(T0);
@@ -186,7 +192,10 @@ test('cost tracker converts tokens and fires budget alerts once per period', () 
 
 test('degradation detector triggers retraining after persistent drift', () => {
   const reports = [];
-  const d = new DegradationDetector({ retrainAfterWindows: 3 }, { onReport: (r) => reports.push(r) });
+  const d = new DegradationDetector(
+    { retrainAfterWindows: 3 },
+    { onReport: (r) => reports.push(r) },
+  );
 
   const healthy = {
     agentId: 'agent-a',

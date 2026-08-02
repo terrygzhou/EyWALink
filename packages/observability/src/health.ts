@@ -12,11 +12,15 @@ export const DEFAULT_WINDOW_SECONDS = 300;
 
 /** Percentile helper over a sorted numeric array. */
 function percentile(sorted: number[], p: number): number {
-  if (sorted.length === 0) return 0;
+  if (sorted.length === 0) {
+    return 0;
+  }
   const idx = (p / 100) * (sorted.length - 1);
   const lo = Math.floor(idx);
   const hi = Math.ceil(idx);
-  if (lo === hi) return sorted[lo];
+  if (lo === hi) {
+    return sorted[lo];
+  }
   const frac = idx - lo;
   return sorted[lo] * (1 - frac) + sorted[hi] * frac;
 }
@@ -47,8 +51,12 @@ export class HealthMonitor {
   prune(cutoffMs: number): number {
     const before = this.samples.length;
     let i = 0;
-    while (i < this.samples.length && this.samples[i].timestamp < cutoffMs) i++;
-    if (i > 0) this.samples.splice(0, i);
+    while (i < this.samples.length && this.samples[i].timestamp < cutoffMs) {
+      i++;
+    }
+    if (i > 0) {
+      this.samples.splice(0, i);
+    }
     return before - this.samples.length;
   }
 
@@ -88,12 +96,17 @@ export class HealthMonitor {
     let score = 100;
     score -= errorRate * 100 * 2; // up to -200 but clamped below
     const p95 = percentile(latencies, 95);
-    if (p95 > 10_000) score -= 40;
-    else if (p95 > 2_000) score -= 20;
-    else if (p95 > 500) score -= 5;
+    if (p95 > 10_000) {
+      score -= 40;
+    } else if (p95 > 2_000) {
+      score -= 20;
+    } else if (p95 > 500) {
+      score -= 5;
+    }
     score = clamp(score, 0, 100);
 
-    const status: AgentStatus = errorRate >= 0.5 ? 'critical' : errorRate >= 0.1 ? 'degraded' : 'healthy';
+    const status: AgentStatus =
+      errorRate >= 0.5 ? 'critical' : errorRate >= 0.1 ? 'degraded' : 'healthy';
 
     return {
       agentId,
@@ -117,7 +130,11 @@ export class HealthMonitor {
   activeAgents(windowSeconds = DEFAULT_WINDOW_SECONDS): string[] {
     const cutoff = Date.now() - windowSeconds * 1000;
     const agents = new Set<string>();
-    for (const s of this.samples) if (s.timestamp >= cutoff) agents.add(s.agentId);
+    for (const s of this.samples) {
+      if (s.timestamp >= cutoff) {
+        agents.add(s.agentId);
+      }
+    }
     return [...agents];
   }
 
